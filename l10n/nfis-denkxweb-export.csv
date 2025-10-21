@@ -1,0 +1,7 @@
+key,de-DE,en-US
+server.config.name.system.nfis_denkxweb_export,denkxweb-Endpoint,denkxweb-Endpoint
+server.config.parameter.system.nfis_denkxweb_export.enabled.label,Status,Status
+server.config.parameter.system.nfis_denkxweb_export.enabled.checkbox,Aktivieren,Activate
+server.right.system.plugin.nfis-denkxweb-export.nfis_denkxweb_export,denkxweb-Endpoint,denkxweb-Endpoint
+server.right.system.plugin.nfis-denkxweb-export.nfis_denkxweb_export.parm.label.use_denkxweb_endpoint,Erlauben die Nutzung des denkxweb-Endpoint,Allow Usage of the denkxweb-endpoint
+server.right.system.plugin.nfis-denkxweb-export.nfis_denkxweb_export.parm.use_denkxweb_endpoint,Aktivieren,Activate

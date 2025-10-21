@@ -1,0 +1,45 @@
+plugin:
+  name: nfis-denkxweb-export
+  version: 1.0
+  l10n: l10n/nfis-denkxweb-export.csv
+  url: https://github.com/programmfabrik/fylr-plugin-monitoring
+  displayname:
+    de-DE: nfis-denkxweb-export
+    en-US: nfis-denkxweb-export
+  info:
+    de-DE: Ergänzung der API um einen Endpoint zum Exportieren von denkxweb und erweitere die Export-Funktion in fylr um eine Option für das denkxweb-Format
+    en-US: Adding an API endpoint for exporting to denkxweb and expanding the Export function in fylr for denkxweb format
+  server:
+    api-version:
+      require: 1
+
+base_config:
+  - name: nfis_denkxweb_export
+    group: nfis_denkxweb_export
+    parameters:
+      enabled:
+        type: bool
+        position: 0
+
+extensions:
+  export:
+    exec:
+      service: "node"
+      commands:
+        - prog: "node"
+          stdin:
+            type: "body"
+          stdout:
+            type: "body"
+          args:
+            - type: "value"
+              value: "%_exec.pluginDir%/server/denkxweb-endpoint.js"
+            - type: "value"
+              value: "%info.json%"
+
+system_rights:
+  - name: nfis_denkxweb_export
+    comment: Adding a denkxweb-export to API
+    parameters:
+      - name: use_denkxweb_endpoint
+        type: bool
