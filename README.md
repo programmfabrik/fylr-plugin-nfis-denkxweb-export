@@ -36,7 +36,7 @@ Github has an overview page to get a list of [all release](https://github.com/pr
   * enable (true|false)
 
 * systemright
-  * assign new systemright "use_denkxweb_endpoint" to user and allow thereby usage of this custom endpoint
+  * assign new systemright "use_denkxweb_endpoint" to user and thereby allow usage of this custom endpoint
 
 # example
 
