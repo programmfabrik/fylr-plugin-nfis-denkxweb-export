@@ -19,7 +19,7 @@ The endpoint accepts the following GET-Parameters:
 |----------|---------|----------|---------|------------------------------------------------------------------------------------|
 | limit    | integer | false    | 1000    | Limits entries to the first X entries found.                                       |
 | offset   | integer | false    | 0       | Skip X entries                                                                     |
-| fromDate | String  | false    | null    | Format: YYYY-MM-DD Limits entries to those that have been changed since that date. |
+| fromDate | String  | false    |         | Format: YYYY-MM-DD Limits entries to those that have been changed since that date. |
 
 
 ## installation
