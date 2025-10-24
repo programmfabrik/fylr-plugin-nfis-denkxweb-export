@@ -21,6 +21,7 @@ const CREATION_EVENT_TYPE_URI = 'http://uri.gbv.de/terminology/object_related_ev
 const PARENT_OBJECT_TYPE_URI = 'http://uri.gbv.de/terminology/nld_object_category/4c76e057-b997-450d-b82f-e7004f8baff9'
 const LITERATURE_REFERENCE_TYPE_URI = 'http://uri.gbv.de/terminology/controlling_literature_weblink/a868c2fa-117a-4899-bb03-034eff5b4695'
 const INTERNET_REFERENCE_TYPE_URI = 'http://uri.gbv.de/terminology/controlling_literature_weblink/df2a8de5-634a-49fe-a158-e88d224e73e9'
+const ADABWEB_IDENTIFIER_URI = 'http://uri.gbv.de/terminology/nld_identifier_type/94d0d141-7f23-4248-84eb-58ef3c70426f'
 
 class DenkxwebUtil {
     static async getXML(objects, accessToken, geoserverAuth) {
@@ -43,6 +44,7 @@ class DenkxwebUtil {
                     '#': 'monument.' + mappedData.recId
                 },
                 recId: mappedData.recId,
+                adabwebId: mappedData.adabwebId,
                 layer: mappedData.layer,
                 level: mappedData.level,
                 country: mappedData.country,
@@ -199,7 +201,8 @@ class DenkxwebUtil {
 
     static async #mapData(object, accessToken, geoserverAuth) {
         const result = {
-            recId: object._system_object_id,                                                                            // Done
+            recId: object._system_object_id, // maybe use alte_id if it exists to be compatible with ADAMweb            // Done
+            adabwebId: null,
             layer: object.item._pool._path[2],                                                                          // Done
             level: null,                                                                                                // Done
             country: "DE",                                                                                              // Done CL: "DE als Standardwert setzen oder aus der Konfiguration nehmen. Wird im Portal offenbar nicht verwendet."
@@ -284,6 +287,11 @@ class DenkxwebUtil {
                     result.approved = false
                     break;
             }
+        }
+
+        const adabwebIdentifier = object.item?.['_nested:item__identifier']?.find((identifier) => identifier.lk_identifier_typ?.conceptURI === ADABWEB_IDENTIFIER_URI)
+        if (adabwebIdentifier) {
+            result.adabwebId = adabwebIdentifier.identifier
         }
 
         const currentAddress = object.item?.['_nested:item__anschrift']?.find((address) => address.lk_adresstyp?.conceptURI === CURRENT_ADDRESS_URI)
@@ -674,7 +682,9 @@ class DenkxwebUtil {
     }
 
     static async #getPolygon(object, geoserverAuth) {
-        const ouuid = "321dfe21-293f-47d6-ac20-7ae058570e8c" //object.item?.lk_nfis_geometrie?.geometry_ids?.[0] || null;
+        const ouuid = "321dfe21-293f-47d6-ac20-7ae058570e8c"
+        // TODO: Nachdem testen die statische ID rausnehmen
+        //const ouuid = object.item?.lk_nfis_geometrie?.geometry_ids?.[0] || null;
         if (!ouuid) return null;
 
         const url = `https://geodaten.nfis6.gbv.de/geoserver/viewer/wfs/?service=WFS&version=1.1.0&request=GetFeature&typename=objekt_fylr_preview&outputFormat=application/json&srsname=EPSG:25832&cql_filter=ouuid%20in%20(%27${ouuid}%27)`
