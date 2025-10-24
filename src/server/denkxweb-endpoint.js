@@ -207,6 +207,11 @@ async function main() {
     payload.search[0].search[0].in = poolIds;
 
     if (fromDate !== null) {
+
+        if (typeof fromDate !== 'string' || !(/\d{4}-[01]\d-[0-3]\d$/.test(fromDate))) {
+            return throwError('Invalid Date', 'fromDate must be a string with the format YYYY-MM-DD Given: ' + fromDate)
+        }
+
         payload.search.push(dateSearchFilter)
     }
 
