@@ -6,7 +6,7 @@ help:
 
 all: build zip ## build and zip
 
-build: clean #buildinfojson ## build plugin
+build: clean buildinfojson ## build plugin
 
 	npm install flatted
 	npm install https
