@@ -248,7 +248,7 @@ class DenkxwebUtil {
 
         const politicalAffiliation = object.item?.['_nested:item__politische_zugehoerigkeit']?.[0]
         if (politicalAffiliation) {
-            const affiliationStrings = politicalAffiliation?.lk_politische_zugehoerigkeit?.conceptName.split('➔')
+            const affiliationStrings = politicalAffiliation?.lk_politische_zugehoerigkeit?.conceptName?.split('➔')
             result.state = affiliationStrings?.[0]?.trim() || null;
             result.district = affiliationStrings?.[1]?.trim() || null;
             result.jointCommunity = affiliationStrings?.[2]?.trim() || null;
