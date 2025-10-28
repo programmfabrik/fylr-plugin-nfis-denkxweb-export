@@ -36,7 +36,7 @@ class DenkxwebUtil {
                     'xmlns': "http://www.rjm.de/denkxweb/denkxml",
                     'xmlns:xlink': "http://www.w3.org/1999/xlink",
                     'xmlns:xsi': "http://www.w3.org/2001/XMLSchema-instance",
-                    'gml:id': "monument.32632669",
+                    'gml:id': "monument." + mappedData.recId,
                     'xsi:schemaLocation': "http://www.rjm.de/denkxweb/denkxml http://geoportal.geodaten.niedersachsen.de/adabweb/schema/denkgml/0.9/denkgml.xsd http://www.opengis.net/gml/3.2 http://geoportal.geodaten.niedersachsen.de/adabweb/schema/ogc/gml/3.2.1/gml.xsd",
                 },
                 'gml:identifier': {
@@ -785,13 +785,8 @@ class DenkxwebUtil {
             // process.stdout.write(JSON.stringify(imageObject, null, 2))
             // this url is the only part of the image object that is not optional in the xml schem
             // so of course it's the only thing we can't currently get, because the api doesn't deliver the data for the original image
-            image.standard = imageObject._standard.eas?.['1']?.[0]?.versions?.original?.deep_link_url || null;
-            image.mimeType = imageObject._standard.eas?.['1']?.[0]?.versions?.original?.technical_metadata?.mime_type || null
-            if (!image.standard) {
-                // remove after original version can be retrieved via API
-                image.standard = imageObject._standard.eas?.['1']?.[0]?.versions?.preview?.deep_link_url || null;
-                image.mimeType = imageObject._standard.eas?.['1']?.[0]?.versions?.preview?.technical_metadata?.mime_type || null
-            }
+            image.standard = imageObject.bild?.bild?.[0]?.versions?.original?.url || null
+            image.mimeType = imageObject.bild?.bild?.[0]?.versions?.original?.technical_metadata?.mime_type || null
             image.yearOfOrigin = imageObject.bild?.entstehungsdatum?.value?.split('-')[0];
 
             if (image.standard) {
