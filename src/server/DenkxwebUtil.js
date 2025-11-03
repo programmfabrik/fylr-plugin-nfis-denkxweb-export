@@ -684,9 +684,9 @@ class DenkxwebUtil {
     }
 
     static async #getPolygon(object, geoserverAuth) {
-        const ouuid = "321dfe21-293f-47d6-ac20-7ae058570e8c"
+        // const ouuid = "321dfe21-293f-47d6-ac20-7ae058570e8c"
         // TODO: Nachdem testen die statische ID rausnehmen
-        //const ouuid = object.item?.lk_nfis_geometrie?.geometry_ids?.[0] || null;
+        const ouuid = object.item?.lk_nfis_geometrie?.geometry_ids?.[0] || null;
         if (!ouuid) return null;
 
         const url = `https://geodaten.nfis6.gbv.de/geoserver/viewer/wfs/?service=WFS&version=1.1.0&request=GetFeature&typename=objekt_fylr_preview&outputFormat=application/json&srsname=EPSG:25832&cql_filter=ouuid%20in%20(%27${ouuid}%27)`
