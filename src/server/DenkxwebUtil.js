@@ -658,7 +658,9 @@ class DenkxwebUtil {
                 name: importField.inhalt,
                 role: null,
             })
-        };
+
+            return persons;
+        }
 
 
         for (let i = 0; i < eventPersons.length; i++) {
