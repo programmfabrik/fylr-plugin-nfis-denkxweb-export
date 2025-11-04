@@ -477,6 +477,10 @@ class DenkxwebUtil {
             parentIds.push(parent._system_object_id)
         });
 
+        if (parentIds.length === 0) {
+            return []
+        }
+
         const searchPayload = {
             "offset": 0,
             "limit": parentIds.length,
@@ -544,23 +548,12 @@ class DenkxwebUtil {
             "format": "long",
             "search": [
                 {
-                    "type": "complex",
-                    "__filter": "SearchInput",
-                    "search": [
-                        {
-                            "type": "complex",
-                            "search": [
-                                {
-                                    "type": "in",
-                                    "in": [object.item._id],
-                                    "fields": ["item._parents.item._id"],
-                                    "bool": "must"
-                                }
-                            ],
-                            "bool": "must"
-                        }
-                    ]
+                    "type": "in",
+                    "in": [object.item._id],
+                    "fields": ["item._parents.item._id"],
+                    "bool": "must"
                 }
+
             ],
             "objecttypes": ["item"],
         }
@@ -729,6 +722,10 @@ class DenkxwebUtil {
             const lkBild = imageData.lk_bild
             imageIds.push(lkBild._system_object_id)
         })
+
+        if (imageIds.length === 0) {
+            return []
+        }
 
         const searchPayload = {
             "offset": 0,

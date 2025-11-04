@@ -2,6 +2,8 @@
 
 const DenkxwebUtil = require('./DenkxwebUtil');
 
+const PUBLIC_TAG_ID = 6;
+
 let info = {}
 try {
     info = JSON.parse(process.argv[2])
@@ -20,6 +22,8 @@ const searchUrl = "http://fylr.localhost:8081/api/v1/search?pretty=0"
 const baseSearchPayload = {
     "offset": offset,
     "limit": limit,
+    "format": "full",
+    // "format": "long",
     "search": [
         {
             "__filter": "SearchTypeSelector",
@@ -32,7 +36,6 @@ const baseSearchPayload = {
                     "fields": [
                         "item._pool.pool._id"
                     ],
-                    // "in": [1, 4, 5, 6, 7, 8, 16, 19, 43]
                     "in": []
                 },
                 {
@@ -49,9 +52,39 @@ const baseSearchPayload = {
                 }
             ]
         },
+        {
+            "type": "complex",
+            "__filter": "SearchInput",
+            "search": [
+                {
+                    "type": "complex",
+                    "search": [
+                        {
+                            "type": "in",
+                            "bool": "must",
+                            "fields": [
+                                "_objecttype"
+                            ],
+                            "in": [
+                                "item"
+                            ]
+                        },
+                        {
+                            "type": "in",
+                            "bool": "must",
+                            "fields": [
+                                "_tags._id"
+                            ],
+                            "in": [
+                                PUBLIC_TAG_ID
+                            ]
+                        }
+                    ],
+                    "bool": "must"
+                }
+            ]
+        }
     ],
-    "format": "full",
-    // "format": "long",
     "sort": [
         {
             "field": "_system_object_id",
@@ -62,6 +95,51 @@ const baseSearchPayload = {
     "objecttypes": ["item"],
     "timezone": "Europe/Berlin"
 }
+
+// const baseSearchPayload = {
+//     "offset": offset,
+//     "limit": limit,
+//     "search": [
+//         {
+//             "__filter": "SearchTypeSelector",
+//             "type": "complex",
+//             "bool": "must",
+//             "search": [
+//                 {
+//                     "bool": "should",
+//                     "type": "in",
+//                     "fields": [
+//                         "item._pool.pool._id"
+//                     ],
+//                     "in": []
+//                 },
+//                 {
+//                     "type": "complex",
+//                     "bool": "should",
+//                     "search": [
+//                         {
+//                             "bool": "must_not",
+//                             "type": "in",
+//                             "fields": ["_objecttype"],
+//                             "in": ["item"]
+//                         }
+//                     ]
+//                 }
+//             ]
+//         },
+//     ],
+//     "format": "full",
+//     // "format": "long",
+//     "sort": [
+//         {
+//             "field": "_system_object_id",
+//             "order": "DESC",
+//             "_level": 0
+//         }
+//     ],
+//     "objecttypes": ["item"],
+//     "timezone": "Europe/Berlin"
+// }
 
 const dateSearchFilter = {
     "__filter": "SearchInput",
@@ -237,6 +315,7 @@ async function main() {
 
     const jsonResponse = await response.json();
     const objects = jsonResponse?.objects;
+    // process.stdout.write(JSON.stringify(jsonResponse, null, 2))
 
     const xml = await DenkxwebUtil.getXML(objects, accessToken, geoserverAuth);
 
