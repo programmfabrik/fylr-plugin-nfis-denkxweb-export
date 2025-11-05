@@ -20,6 +20,33 @@ base_config:
       enabled:
         type: bool
         position: 0
+  - name: nfis_tag_ids
+    group: nfis_denkxweb_export_tag_ids
+    parameters:
+      level_0:
+        type: int
+        position: 0
+      level_1:
+        type: int
+        position: 1
+      level_2:
+        type: int
+        position: 2
+      level_3:
+        type: int
+        position: 3
+      directory_object:
+        type: int
+        position: 4
+      not_directory_object:
+        type: int
+        position: 5
+      public:
+        type: int
+        position: 6
+      not_public:
+        type: int
+        position: 7
 
 extensions:
   export:

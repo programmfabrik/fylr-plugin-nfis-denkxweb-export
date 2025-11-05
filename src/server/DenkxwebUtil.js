@@ -24,11 +24,11 @@ const INTERNET_REFERENCE_TYPE_URI = 'http://uri.gbv.de/terminology/controlling_l
 const ADABWEB_IDENTIFIER_URI = 'http://uri.gbv.de/terminology/nld_identifier_type/94d0d141-7f23-4248-84eb-58ef3c70426f'
 
 class DenkxwebUtil {
-    static async getXML(objects, accessToken, geoserverAuth) {
+    static async getXML(objects, accessToken, geoserverAuth, tagIds) {
         const dataForXml = { monuments: { monument: [] } }
         for (let i = 0; i < objects.length; i++) {
             const object = objects[i];
-            const mappedData = await this.#mapData(object, accessToken, geoserverAuth)
+            const mappedData = await this.#mapData(object, accessToken, geoserverAuth, tagIds)
 
             const monument = {
                 '@': {
@@ -200,7 +200,7 @@ class DenkxwebUtil {
         return doc.end({ prettyPrint: true });
     }
 
-    static async #mapData(object, accessToken, geoserverAuth) {
+    static async #mapData(object, accessToken, geoserverAuth, tagIds) {
         const result = {
             recId: object._system_object_id, // maybe use alte_id if it exists to be compatible with ADAMweb            // Done
             uuid: object._uuid,                                                                                         // Done
@@ -262,30 +262,30 @@ class DenkxwebUtil {
             const tag = object._tags[i];
             switch (tag._id) {
                 // Level
-                case TAG_IDS.LEVEL_0:
+                case tagIds.level_0:
                     result.level = 0
                     break;
-                case TAG_IDS.LEVEL_1:
+                case tagIds.level_1:
                     result.level = 1
                     break;
-                case TAG_IDS.LEVEL_2:
+                case tagIds.level_2:
                     result.level = 2
                     break;
-                case TAG_IDS.LEVEL_3:
+                case tagIds.level_3:
                     result.level = 3
                     break;
                 // ddaObj
-                case TAG_IDS.PUBLIC:
+                case tagIds.public:
                     result.ddaObj = true
                     break;
-                case TAG_IDS.NOT_PUBLIC:
+                case tagIds.not_public:
                     result.ddaObj = false
                     break;
                 // approved
-                case TAG_IDS.DIRECTORY_OBJECT:
+                case tagIds.directory_object:
                     result.approved = true
                     break;
-                case TAG_IDS.NOT_DIRECTORY_OBJECT:
+                case tagIds.not_directory_object:
                     result.approved = false
                     break;
             }
@@ -366,7 +366,7 @@ class DenkxwebUtil {
         result.groups = await this.#getGroups(object, accessToken);
         result.theme = await this.#getThemes(object.item?.['_nested:item__thema'] || []);
         result.images = await this.#getImages(object, accessToken, preferredImageId);
-        result.groupMembers = await this.#getGroupMembers(object, accessToken);
+        result.groupMembers = await this.#getGroupMembers(object, accessToken, tagIds);
         result.polygon = await this.#getPolygon(object, geoserverAuth);
 
         if (result.polygon) {
@@ -538,7 +538,7 @@ class DenkxwebUtil {
         return groups;
     }
 
-    static async #getGroupMembers(object, accessToken) {
+    static async #getGroupMembers(object, accessToken, tagIds) {
         if (!object._has_children) return [];
         const groupMembers = [];
 
@@ -569,7 +569,7 @@ class DenkxwebUtil {
 
         const jsonResponse = await response.json()
         const members = jsonResponse?.objects?.filter((parent) => {
-            return parent._tags?.some(tag => tag._id === TAG_IDS.PUBLIC)
+            return parent._tags?.some(tag => tag._id === tagIds.public)
         })
 
         for (let i = 0; i < members.length; i++) {

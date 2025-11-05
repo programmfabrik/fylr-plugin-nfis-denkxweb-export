@@ -2,8 +2,6 @@
 
 const DenkxwebUtil = require('./DenkxwebUtil');
 
-const PUBLIC_TAG_ID = 6;
-
 let info = {}
 try {
     info = JSON.parse(process.argv[2])
@@ -75,9 +73,7 @@ const baseSearchPayload = {
                             "fields": [
                                 "_tags._id"
                             ],
-                            "in": [
-                                PUBLIC_TAG_ID
-                            ]
+                            "in": []
                         }
                     ],
                     "bool": "must"
@@ -95,51 +91,6 @@ const baseSearchPayload = {
     "objecttypes": ["item"],
     "timezone": "Europe/Berlin"
 }
-
-// const baseSearchPayload = {
-//     "offset": offset,
-//     "limit": limit,
-//     "search": [
-//         {
-//             "__filter": "SearchTypeSelector",
-//             "type": "complex",
-//             "bool": "must",
-//             "search": [
-//                 {
-//                     "bool": "should",
-//                     "type": "in",
-//                     "fields": [
-//                         "item._pool.pool._id"
-//                     ],
-//                     "in": []
-//                 },
-//                 {
-//                     "type": "complex",
-//                     "bool": "should",
-//                     "search": [
-//                         {
-//                             "bool": "must_not",
-//                             "type": "in",
-//                             "fields": ["_objecttype"],
-//                             "in": ["item"]
-//                         }
-//                     ]
-//                 }
-//             ]
-//         },
-//     ],
-//     "format": "full",
-//     // "format": "long",
-//     "sort": [
-//         {
-//             "field": "_system_object_id",
-//             "order": "DESC",
-//             "_level": 0
-//         }
-//     ],
-//     "objecttypes": ["item"],
-//     "timezone": "Europe/Berlin"
-// }
 
 const dateSearchFilter = {
     "__filter": "SearchInput",
@@ -258,8 +209,9 @@ async function main() {
         getPoolsFromAPI(),
     ])
 
-    const pluginBaseConfig = sessionInfo.config.base.plugin['nfis-denkxweb-export'].config['nfis_denkxweb_export'];
-    if (!pluginBaseConfig.enabled) [
+    const pluginBaseConfigEnabled = sessionInfo.config.base.plugin['nfis-denkxweb-export'].config['nfis_denkxweb_export'];
+    const pluginBaseConfigTagIds = sessionInfo.config.base.plugin['nfis-denkxweb-export'].config['nfis_tag_ids'];
+    if (!pluginBaseConfigEnabled.enabled) [
         throwError("The endpoint is not activated.", '')
     ]
 
@@ -284,6 +236,8 @@ async function main() {
     })
     payload.search[0].search[0].in = poolIds;
 
+    payload.search[1].search[0].search[1].in = [pluginBaseConfigTagIds.public];
+
     if (fromDate !== null) {
 
         if (typeof fromDate !== 'string' || !(/\d{4}-[01]\d-[0-3]\d$/.test(fromDate))) {
@@ -292,6 +246,8 @@ async function main() {
 
         payload.search.push(dateSearchFilter)
     }
+
+    // process.stdout.write(JSON.stringify(payload, null, 2))
 
 
     const nfisGeometryConfig = config?.plugin?.['custom-data-type-nfis-geometry']
@@ -317,7 +273,7 @@ async function main() {
     const objects = jsonResponse?.objects;
     // process.stdout.write(JSON.stringify(jsonResponse, null, 2))
 
-    const xml = await DenkxwebUtil.getXML(objects, accessToken, geoserverAuth);
+    const xml = await DenkxwebUtil.getXML(objects, accessToken, geoserverAuth, pluginBaseConfigTagIds);
 
     process.stdout.write(xml)
     // process.stdout.write(JSON.stringify(objects[1].item['_reverse_nested:objekt__bild:lk_objekt'], null, 2))

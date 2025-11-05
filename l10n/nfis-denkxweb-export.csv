@@ -2,6 +2,15 @@ key,de-DE,en-US
 server.config.name.system.nfis_denkxweb_export,denkxweb-Endpoint,denkxweb-Endpoint
 server.config.parameter.system.nfis_denkxweb_export.enabled.label,Status,Status
 server.config.parameter.system.nfis_denkxweb_export.enabled.checkbox,Aktivieren,Activate
+server.config.name.system.nfis_tag_ids,Tag-IDs,Tag-IDs
+server.config.parameter.system.nfis_tag_ids.level_0.label,Level 0 Tag ID,Level 0 Tag ID
+server.config.parameter.system.nfis_tag_ids.level_1.label,Level 1 Tag ID,Level 1 Tag ID
+server.config.parameter.system.nfis_tag_ids.level_2.label,Level 2 Tag ID,Level 2 Tag ID
+server.config.parameter.system.nfis_tag_ids.level_3.label,Level 3 Tag ID,Level 3 Tag ID
+server.config.parameter.system.nfis_tag_ids.directory_object.label,Verzeichnisobjekt Tag ID,Directory Object Tag ID
+server.config.parameter.system.nfis_tag_ids.not_directory_object.label,Kein Verzeichnisobjekt Tag ID,Not Directory Object Tag ID
+server.config.parameter.system.nfis_tag_ids.public.label,Veröffentlicht Tag ID,Public Tag ID
+server.config.parameter.system.nfis_tag_ids.not_public.label,Nicht Veröffentlicht Tag ID, Not Public Tag ID
 server.right.system.plugin.nfis-denkxweb-export.nfis_denkxweb_export,denkxweb-Endpoint,denkxweb-Endpoint
 server.right.system.plugin.nfis-denkxweb-export.nfis_denkxweb_export.parm.label.use_denkxweb_endpoint,Erlauben die Nutzung des denkxweb-Endpoint,Allow Usage of the denkxweb-endpoint
 server.right.system.plugin.nfis-denkxweb-export.nfis_denkxweb_export.parm.use_denkxweb_endpoint,Aktivieren,Activate
