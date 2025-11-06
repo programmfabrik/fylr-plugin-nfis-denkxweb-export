@@ -214,6 +214,18 @@ async function main() {
     if (!pluginBaseConfigEnabled.enabled) {
         throwError("The endpoint is not activated.", '')
     }
+    if (
+        !pluginBaseConfigTagIds.level_0 ||
+        !pluginBaseConfigTagIds.level_1 ||
+        !pluginBaseConfigTagIds.level_2 ||
+        !pluginBaseConfigTagIds.level_3 ||
+        !pluginBaseConfigTagIds.directory_object ||
+        !pluginBaseConfigTagIds.not_directory_object ||
+        !pluginBaseConfigTagIds.public ||
+        !pluginBaseConfigTagIds.not_public
+    ) {
+        throwError("Tags-IDs not configured.", 'One or more tag ids are not set. An admin can set the tag ids in the base config for this plugin.')
+    }
 
     // check, if user has systemright to use the validation-endpoint, else throw error
     let allowAccess = false;

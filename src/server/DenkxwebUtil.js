@@ -301,6 +301,7 @@ class DenkxwebUtil {
             result.address = `${currentAddress.strasse} ${currentAddress.hausnummer} ${currentAddress?.hausnummer_zusatz}`
         }
 
+        // object is Level 0 => we are not allowed to send this data
         if (result.level > 0) {
             const objectDescription = object.item?.['_nested:item__beschreibung']?.find((description) => {
                 return description.lk_adresstyp === OBJECT_DESCRIPTION_URI && description?.lk_veroeffentlichen?.ja_nein_objekttyp?._id === 1
