@@ -211,9 +211,9 @@ async function main() {
 
     const pluginBaseConfigEnabled = sessionInfo.config.base.plugin['nfis-denkxweb-export'].config['nfis_denkxweb_export'];
     const pluginBaseConfigTagIds = sessionInfo.config.base.plugin['nfis-denkxweb-export'].config['nfis_tag_ids'];
-    if (!pluginBaseConfigEnabled.enabled) [
+    if (!pluginBaseConfigEnabled.enabled) {
         throwError("The endpoint is not activated.", '')
-    ]
+    }
 
     // check, if user has systemright to use the validation-endpoint, else throw error
     let allowAccess = false;
