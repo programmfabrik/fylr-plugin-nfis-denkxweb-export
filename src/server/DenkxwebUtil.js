@@ -23,11 +23,19 @@ const LITERATURE_REFERENCE_TYPE_URI = 'http://uri.gbv.de/terminology/controlling
 const INTERNET_REFERENCE_TYPE_URI = 'http://uri.gbv.de/terminology/controlling_literature_weblink/df2a8de5-634a-49fe-a158-e88d224e73e9'
 const ADABWEB_IDENTIFIER_URI = 'http://uri.gbv.de/terminology/nld_identifier_type/94d0d141-7f23-4248-84eb-58ef3c70426f'
 
+// themes map: conceptURI => label
+const THEMES = {}
+
 class DenkxwebUtil {
+
     static async getXML(objects, metaData, accessToken, geoserverAuth, tagIds) {
         const dataForXml = {
             monuments: { '@': metaData, monument: [] }
         }
+
+        // to save time we will try to reduce the number of requests to 3rd party APIs as much as possible.
+        // themes are retrieved from Dante and can be bundled into a single request for all objects.
+        await this.#getBundledThemes(objects)
 
         for (let i = 0; i < objects.length; i++) {
             const object = objects[i];
@@ -247,7 +255,7 @@ class DenkxwebUtil {
             notablePersons: [],                                                                                         // Done
             preferredImage: null,                                                                                       // Done
             images: []                  // TODO
-        } // 40
+        }
 
         const politicalAffiliation = object.item?.['_nested:item__politische_zugehoerigkeit']?.[0]
         if (politicalAffiliation) {
@@ -432,16 +440,35 @@ class DenkxwebUtil {
     }
 
     static async #getThemes(themesArray) {
-        // uri can be a | divided list, so we can bundle the request
-        // https://api.dante.gbv.de/data?uri=${item._nested:item__thema}&properties=+hiddenLabel
         const labels = [];
-        const URIArray = [];
 
         for (let i = 0; i < themesArray.length; i++) {
             const theme = themesArray[i];
-            URIArray.push(theme.lk_thema.conceptURI)
+            const URI = theme.lk_thema.conceptURI
+            if (THEMES[URI]) {
+                labels.push(THEMES[URI]);
+            }
         }
 
+        return labels;
+    }
+
+    static async #getBundledThemes(objects) {
+        // uri can be a | divided list, so we can bundle the request
+        const URIs = {};
+
+        for (let i = 0; i < objects.length; i++) {
+            const object = objects[i];
+            const themesArray = object.item?.['_nested:item__thema'] || []
+            for (let j = 0; j < themesArray.length; j++) {
+                const theme = themesArray[j];
+                if (theme?.lk_thema?.conceptURI) {
+                    URIs[theme.lk_thema.conceptURI] = true
+                }
+            }
+        }
+
+        const URIArray = Object.keys(URIs)
         if (URIArray.length === 0) return []
 
         const URIListString = URIArray.join('|');
@@ -453,12 +480,13 @@ class DenkxwebUtil {
         for (let i = 0; i < themesJson.length; i++) {
             const theme = themesJson[i];
             const label = theme.hiddenLabel?.de?.[0]
-            if (label) {
-                labels.push(label);
+            const URI = theme.uri
+            if (label && URI) {
+                THEMES[URI] = label
             }
         }
 
-        return labels;
+        // process.stdout.write(JSON.stringify({ THEMES, URIArray, themesJson }, null, 2))
     }
 
     static #getDatingFrom(event, item) {
