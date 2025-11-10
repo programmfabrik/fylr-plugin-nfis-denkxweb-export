@@ -208,7 +208,7 @@ class DenkxwebUtil {
             recId: object._system_object_id, // maybe use alte_id if it exists to be compatible with ADAMweb            // Done
             uuid: object._uuid,                                                                                         // Done
             adabwebId: null,                                                                                            // Done
-            layer: object.item._pool._path[2],                                                                          // Done
+            layer: object?.item._pool?._path?.[2]?.pool?.name?.['de-DE'] || null,                                                    // Done
             level: null,                                                                                                // Done
             country: "DE",                                                                                              // Done CL: "DE als Standardwert setzen oder aus der Konfiguration nehmen. Wird im Portal offenbar nicht verwendet."
             state: null,                                                                                                // Done
