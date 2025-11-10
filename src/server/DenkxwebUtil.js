@@ -24,8 +24,11 @@ const INTERNET_REFERENCE_TYPE_URI = 'http://uri.gbv.de/terminology/controlling_l
 const ADABWEB_IDENTIFIER_URI = 'http://uri.gbv.de/terminology/nld_identifier_type/94d0d141-7f23-4248-84eb-58ef3c70426f'
 
 class DenkxwebUtil {
-    static async getXML(objects, accessToken, geoserverAuth, tagIds) {
-        const dataForXml = { monuments: { monument: [] } }
+    static async getXML(objects, metaData, accessToken, geoserverAuth, tagIds) {
+        const dataForXml = {
+            monuments: { '@': metaData, monument: [] }
+        }
+
         for (let i = 0; i < objects.length; i++) {
             const object = objects[i];
             const mappedData = await this.#mapData(object, accessToken, geoserverAuth, tagIds)

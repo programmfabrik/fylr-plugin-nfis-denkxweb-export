@@ -283,9 +283,15 @@ async function main() {
 
     const jsonResponse = await response.json();
     const objects = jsonResponse?.objects;
+    const responseMetaData = {
+        count: objects?.length || 0,
+        total: jsonResponse.count,
+        offset: jsonResponse.offset,
+        limit: jsonResponse.limit,
+    }
     // process.stdout.write(JSON.stringify(jsonResponse, null, 2))
 
-    const xml = await DenkxwebUtil.getXML(objects, accessToken, geoserverAuth, pluginBaseConfigTagIds);
+    const xml = await DenkxwebUtil.getXML(objects, responseMetaData, accessToken, geoserverAuth, pluginBaseConfigTagIds);
 
     process.stdout.write(xml)
     // process.stdout.write(JSON.stringify(objects[1].item['_reverse_nested:objekt__bild:lk_objekt'], null, 2))
