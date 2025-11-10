@@ -130,10 +130,10 @@ class DenkxwebUtil {
             }
 
             if (mappedData.images.length > 0) {
-                monument.images = { 'wfs:member': [] }
+                monument.images = []
 
                 mappedData.images.forEach(image => {
-                    monument.images['wfs:member'].push({
+                    monument.images.push({
                         Image: {
                             '@gml:id': 'Image.' + image.identifier,
                             'gml:identifier': {
