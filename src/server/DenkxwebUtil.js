@@ -143,12 +143,7 @@ class DenkxwebUtil {
                 mappedData.images.forEach(image => {
                     monument.images.push({
                         image: {
-                            '@gml:id': 'Image.' + image.identifier,
-                            'gml:identifier': {
-                                '@codeSpace': 'https://denkmalpflege.niedersachsen.de/',
-                                '#': 'Image.' + image.identifier
-                            },
-                            depicts: { '@xlink:href': 'urn:x-adabweb:' + mappedData.recId },
+                            '@gml_id': 'Image.' + image.identifier,
                             description: image.description,
                             standard: { '@url': image.standard, '@type': image.mimeType },
                             preferred: image.preferred,
