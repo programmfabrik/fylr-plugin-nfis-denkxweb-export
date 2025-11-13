@@ -142,7 +142,7 @@ class DenkxwebUtil {
 
                 mappedData.images.forEach(image => {
                     monument.images.push({
-                        Image: {
+                        image: {
                             '@gml:id': 'Image.' + image.identifier,
                             'gml:identifier': {
                                 '@codeSpace': 'https://denkmalpflege.niedersachsen.de/',
