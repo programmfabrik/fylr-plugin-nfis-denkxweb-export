@@ -24,7 +24,13 @@ const INTERNET_REFERENCE_TYPE_URI = 'http://uri.gbv.de/terminology/controlling_l
 const ADABWEB_IDENTIFIER_URI = 'http://uri.gbv.de/terminology/nld_identifier_type/94d0d141-7f23-4248-84eb-58ef3c70426f'
 
 // themes map: conceptURI => label
-const THEMES = {}
+const THEMES_MAP = {}
+// group map: system_object_id of the group => group object
+const GROUP_MAP = {}
+// group member map: system_object_id of the group => array of group members
+const GROUP_MEMBER_MAP = {}
+// poylgon map: ouuid => poylgon object
+const POLYGON_MAP = {}
 
 class DenkxwebUtil {
 
@@ -35,7 +41,13 @@ class DenkxwebUtil {
 
         // to save time we will try to reduce the number of requests to 3rd party APIs as much as possible.
         // themes are retrieved from Dante and can be bundled into a single request for all objects.
-        await this.#getBundledThemes(objects)
+        const themesPromise = this.#getBundledThemes(objects)
+        const groupsPromise = this.#getBundledGroups(objects, accessToken)
+        const groupMembersPromise = this.#getBundledGroupMembers(objects, accessToken, tagIds)
+        const polygonPromise = this.#getBundledPolygons(objects, geoserverAuth)
+
+        await Promise.all([themesPromise, groupsPromise, groupMembersPromise, polygonPromise])
+        // return process.stdout.write(JSON.stringify({ GROUP_MEMBER_MAP }, null, 2))
 
         for (let i = 0; i < objects.length; i++) {
             const object = objects[i];
@@ -370,11 +382,11 @@ class DenkxwebUtil {
             result.preferredImage = `urn:x-adabweb:${preferredImageId}`
         }
 
-        result.groups = await this.#getGroups(object, accessToken);
-        result.theme = await this.#getThemes(object.item?.['_nested:item__thema'] || []);
+        result.groups = this.#getGroups(object, accessToken);
+        result.theme = this.#getThemes(object.item?.['_nested:item__thema'] || []);
+        result.groupMembers = this.#getGroupMembers(object)
         result.images = await this.#getImages(object, accessToken, preferredImageId);
-        result.groupMembers = await this.#getGroupMembers(object, accessToken, tagIds);
-        result.polygon = await this.#getPolygon(object, geoserverAuth);
+        result.polygon = this.#getPolygon(object);
 
         if (result.polygon) {
             result.point = pointOnFeature(result.polygon);
@@ -434,14 +446,14 @@ class DenkxwebUtil {
         return array;
     }
 
-    static async #getThemes(themesArray) {
+    static #getThemes(themesArray) {
         const labels = [];
 
         for (let i = 0; i < themesArray.length; i++) {
             const theme = themesArray[i];
             const URI = theme.lk_thema.conceptURI
-            if (THEMES[URI]) {
-                labels.push(THEMES[URI]);
+            if (THEMES_MAP[URI]) {
+                labels.push(THEMES_MAP[URI]);
             }
         }
 
@@ -477,11 +489,11 @@ class DenkxwebUtil {
             const label = theme.hiddenLabel?.de?.[0]
             const URI = theme.uri
             if (label && URI) {
-                THEMES[URI] = label
+                THEMES_MAP[URI] = label
             }
         }
 
-        // process.stdout.write(JSON.stringify({ THEMES, URIArray, themesJson }, null, 2))
+        // process.stdout.write(JSON.stringify({ THEMES_MAP, URIArray, themesJson }, null, 2))
     }
 
     static #getDatingFrom(event, item) {
@@ -496,12 +508,32 @@ class DenkxwebUtil {
         }
     }
 
-    static async #getGroups(object, accessToken) {
+    static #getGroups(object) {
+        const groups = [];
+
+        object.item?._parents.forEach(parent => {
+            const fullParent = GROUP_MAP[parent._system_object_id];
+            if (!fullParent) return;
+            groups.push({
+                gId: fullParent._system_object_id,
+                fId: object._system_object_id,
+                buildingType: fullParent.item?.lk_objekttyp?.conceptName || null,
+                linkDda: null,
+            });
+        });
+
+        return groups;
+    }
+
+    static async #getBundledGroups(objects, accessToken) {
         const groups = [];
         const parentIds = [];
 
-        object.item?._parents.forEach(parent => {
-            parentIds.push(parent._system_object_id)
+        objects.forEach(object => {
+            object.item?._parents.forEach(parent => {
+                parentIds.push(parent._system_object_id)
+                GROUP_MAP[parent._system_object_id] = null;
+            });
         });
 
         if (parentIds.length === 0) {
@@ -544,30 +576,53 @@ class DenkxwebUtil {
             body: JSON.stringify(searchPayload),
         })
         const jsonResponse = await response.json()
+
+
         const parents = jsonResponse?.objects?.filter((parent) => {
-            const objectCategory = parent.item?.['_nested:item__objektkategorie']?.lk_objektkategorie
-            return objectCategory?.conceptURI === PARENT_OBJECT_TYPE_URI;
+            return parent.item?.['_nested:item__objektkategorie'].some((category) => {
+                return category.lk_objektkategorie?.conceptURI === PARENT_OBJECT_TYPE_URI
+            })
         })
-        if (!parents || parents.length === 0) {
-            return [];
-        }
 
         for (let i = 0; i < parents.length; i++) {
             const parent = parents[i];
-            groups.push({
-                gId: parent._system_object_id,
-                fId: object._system_object_id,
-                buildingType: parent.item?.lk_objekttyp?.conceptName || null,
-                linkDda: null,
-            });
+            GROUP_MAP[parent._system_object_id] = parent;
         }
-
-        return groups;
     }
 
-    static async #getGroupMembers(object, accessToken, tagIds) {
-        if (!object._has_children) return [];
-        const groupMembers = [];
+    static #getGroupMembers(object) {
+        const members = GROUP_MEMBER_MAP[object._system_object_id] || [];
+        const returnValue = [];
+
+        for (let i = 0; i < members.length; i++) {
+            const member = members[i];
+            const memberObject = {
+                gId: object._system_object_id,
+                fId: member._system_object_id,
+                buildingType: member.item?.lk_objekttyp?.conceptName || null,
+                address: null,
+                linkDda: null,
+            }
+
+            const currentAddress = member.item?.['_nested:item__anschrift']?.find((address) => address.lk_adresstyp?.conceptURI === CURRENT_ADDRESS_URI)
+            if (currentAddress) {
+                memberObject.address = `${currentAddress.strasse} ${currentAddress.hausnummer} ${currentAddress?.hausnummer_zusatz}`
+            }
+
+            returnValue.push(memberObject);
+        }
+        return returnValue
+    }
+
+    static async #getBundledGroupMembers(objects, accessToken, tagIds) {
+        const parentIds = [];
+
+        objects.forEach(object => {
+            if (!object._has_children) return;
+            parentIds.push(object.item._id)
+        });
+        if (parentIds.length === 0) return
+
 
         const searchPayload = {
             "offset": 0,
@@ -576,7 +631,7 @@ class DenkxwebUtil {
             "search": [
                 {
                     "type": "in",
-                    "in": [object.item._id],
+                    "in": parentIds,
                     "fields": ["item._parents.item._id"],
                     "bool": "must"
                 }
@@ -601,23 +656,17 @@ class DenkxwebUtil {
 
         for (let i = 0; i < members.length; i++) {
             const member = members[i];
-            const memberObject = {
-                gId: object._system_object_id,
-                fId: member._system_object_id,
-                buildingType: member.item?.lk_objekttyp?.conceptName || null,
-                address: null,
-                linkDda: null,
-            }
+            const parents = member?.item?._parents
+            if (!Array.isArray(parents)) continue;
 
-            const currentAddress = member.item?.['_nested:item__anschrift']?.find((address) => address.lk_adresstyp?.conceptURI === CURRENT_ADDRESS_URI)
-            if (currentAddress) {
-                memberObject.address = `${currentAddress.strasse} ${currentAddress.hausnummer} ${currentAddress?.hausnummer_zusatz}`
-            }
-
-            groupMembers.push(memberObject);
+            parents.forEach(parent => {
+                if (!Array.isArray(GROUP_MEMBER_MAP[parent._system_object_id])) {
+                    GROUP_MEMBER_MAP[parent._system_object_id] = []
+                }
+                GROUP_MEMBER_MAP[parent._system_object_id].push(member);
+            });
         }
 
-        return groupMembers
     }
 
     static #getPpnReference(object) {
@@ -705,13 +754,31 @@ class DenkxwebUtil {
         return persons
     }
 
-    static async #getPolygon(object, geoserverAuth) {
-        // const ouuid = "321dfe21-293f-47d6-ac20-7ae058570e8c"
-        // TODO: Nachdem testen die statische ID rausnehmen
+    static #getPolygon(object) {
         const ouuid = object.item?.lk_nfis_geometrie?.geometry_ids?.[0] || null;
+        // TODO: Nachdem testen die statische ID rausnehmen
+        // const ouuid = Math.random() > 0.5 ? "321dfe21-293f-47d6-ac20-7ae058570e8c" : "10135592-550f-47bc-bdd3-38a99d8be43f"
         if (!ouuid) return null;
 
-        const url = `https://geodaten.nfis6.gbv.de/geoserver/viewer/wfs/?service=WFS&version=1.1.0&request=GetFeature&typename=objekt_fylr_preview&outputFormat=application/json&srsname=EPSG:25832&cql_filter=ouuid%20in%20(%27${ouuid}%27)`
+
+        // process.stdout.write(JSON.stringify({ polygon: POLYGON_MAP[ouuid] }, null, 2))
+        return POLYGON_MAP[ouuid] || null
+    }
+
+    static async #getBundledPolygons(objects, geoserverAuth) {
+
+        const ouuids = [];
+        objects.forEach(object => {
+            // TODO: Nachdem testen die statische ID rausnehmen
+            // const ouuid = Math.random() > 0.5 ? "321dfe21-293f-47d6-ac20-7ae058570e8c" : "10135592-550f-47bc-bdd3-38a99d8be43f"
+            const ouuid = object.item?.lk_nfis_geometrie?.geometry_ids?.[0] || null;
+
+            if (!ouuid) return;
+
+            ouuids.push(`%27${ouuid}%27`)
+        });
+
+        const url = `https://geodaten.nfis6.gbv.de/geoserver/viewer/wfs/?service=WFS&version=1.1.0&request=GetFeature&typename=objekt_fylr_preview&outputFormat=application/json&srsname=EPSG:25832&cql_filter=ouuid%20in%20(${ouuids.join(',')})`
 
         const response = await fetch(url, {
             headers: {
@@ -720,15 +787,16 @@ class DenkxwebUtil {
             },
         })
         if (!response.ok) {
-            return null;
+            return;
         }
         const featureCollection = await response.json()
         if (!featureCollection.features || featureCollection.features.length === 0) {
-            return null;
+            return;
         }
-        const feature = featureCollection.features[0]
+        featureCollection.features.forEach(feature => {
+            POLYGON_MAP[feature.properties.ouuid] = feature
+        });
 
-        return feature
     }
 
     static #getLinkDenkmalViewer(point) {
