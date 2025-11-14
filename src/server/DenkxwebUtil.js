@@ -536,9 +536,8 @@ class DenkxwebUtil {
             });
         });
 
-        if (parentIds.length === 0) {
-            return []
-        }
+        if (parentIds.length === 0) return
+
 
         const searchPayload = {
             "offset": 0,
@@ -777,6 +776,8 @@ class DenkxwebUtil {
 
             ouuids.push(`%27${ouuid}%27`)
         });
+
+        if (ouuids.length === 0) return;
 
         const url = `https://geodaten.nfis6.gbv.de/geoserver/viewer/wfs/?service=WFS&version=1.1.0&request=GetFeature&typename=objekt_fylr_preview&outputFormat=application/json&srsname=EPSG:25832&cql_filter=ouuid%20in%20(${ouuids.join(',')})`
 
