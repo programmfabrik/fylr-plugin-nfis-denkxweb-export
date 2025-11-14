@@ -579,7 +579,7 @@ class DenkxwebUtil {
 
 
         const parents = jsonResponse?.objects?.filter((parent) => {
-            return parent.item?.['_nested:item__objektkategorie'].some((category) => {
+            return parent.item?.['_nested:item__objektkategorie']?.some((category) => {
                 return category.lk_objektkategorie?.conceptURI === PARENT_OBJECT_TYPE_URI
             })
         })
