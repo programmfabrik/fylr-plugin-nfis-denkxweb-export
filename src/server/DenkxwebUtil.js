@@ -31,6 +31,8 @@ const GROUP_MAP = {}
 const GROUP_MEMBER_MAP = {}
 // poylgon map: ouuid => poylgon object
 const POLYGON_MAP = {}
+// iamge map: system_object_id of the image object => array of image object
+const IMAGE_MAP = {}
 
 class DenkxwebUtil {
 
@@ -40,14 +42,14 @@ class DenkxwebUtil {
         }
 
         // to save time we will try to reduce the number of requests to 3rd party APIs as much as possible.
-        // themes are retrieved from Dante and can be bundled into a single request for all objects.
+        // To do that we bundle most of our API-requests.
         const themesPromise = this.#getBundledThemes(objects)
         const groupsPromise = this.#getBundledGroups(objects, accessToken)
         const groupMembersPromise = this.#getBundledGroupMembers(objects, accessToken, tagIds)
         const polygonPromise = this.#getBundledPolygons(objects, geoserverAuth)
+        const imagePromise = this.#getBundledImages(objects, accessToken)
 
-        await Promise.all([themesPromise, groupsPromise, groupMembersPromise, polygonPromise])
-        // return process.stdout.write(JSON.stringify({ GROUP_MEMBER_MAP }, null, 2))
+        await Promise.all([themesPromise, groupsPromise, groupMembersPromise, polygonPromise, imagePromise])
 
         for (let i = 0; i < objects.length; i++) {
             const object = objects[i];
@@ -385,7 +387,7 @@ class DenkxwebUtil {
         result.groups = this.#getGroups(object, accessToken);
         result.theme = this.#getThemes(object.item?.['_nested:item__thema'] || []);
         result.groupMembers = this.#getGroupMembers(object)
-        result.images = await this.#getImages(object, accessToken, preferredImageId);
+        result.images = this.#getImages(object, preferredImageId);
         result.polygon = this.#getPolygon(object);
 
         if (result.polygon) {
@@ -492,8 +494,6 @@ class DenkxwebUtil {
                 THEMES_MAP[URI] = label
             }
         }
-
-        // process.stdout.write(JSON.stringify({ THEMES_MAP, URIArray, themesJson }, null, 2))
     }
 
     static #getDatingFrom(event, item) {
@@ -760,7 +760,6 @@ class DenkxwebUtil {
         if (!ouuid) return null;
 
 
-        // process.stdout.write(JSON.stringify({ polygon: POLYGON_MAP[ouuid] }, null, 2))
         return POLYGON_MAP[ouuid] || null
     }
 
@@ -809,20 +808,71 @@ class DenkxwebUtil {
         return link;
     }
 
-    static async #getImages(object, accessToken, preferredImageId) {
+    static #getImages(object, preferredImageId) {
         if (!Array.isArray(object.item['_reverse_nested:objekt__bild:lk_objekt'])) return []
         if (object.item['_reverse_nested:objekt__bild:lk_objekt'].length === 0) return []
 
         const returnImages = [];
-        const imageIds = [];
+        const imageObjects = []
 
         object.item['_reverse_nested:objekt__bild:lk_objekt'].forEach((imageData) => {
             const lkBild = imageData.lk_bild
-            imageIds.push(lkBild._system_object_id)
+            if (!IMAGE_MAP[lkBild._system_object_id]) return
+
+            imageObjects.push(IMAGE_MAP[lkBild._system_object_id])
+
         })
 
-        if (imageIds.length === 0) {
+        if (imageObjects.length === 0) {
             return []
+        }
+
+
+        for (let i = 0; i < imageObjects.length; i++) {
+            const imageObject = imageObjects[i];
+            if (imageObject.bild.lk_veroeffentlichen.ja_nein_objekttyp._id !== 1) continue;
+
+            const image = {
+                identifier: imageObject._system_object_id,
+                description: imageObject.bild.titel,
+                standard: null,
+                preferred: imageObject._system_object_id === preferredImageId,
+                creator: imageObject.bild.urheberin,
+                rights: imageObject.bild.rechteinhaberin,
+                licence: "CC-BY-SA 4.0",
+                yearOfOrigin: null,
+                mimeType: null
+            }
+
+            // this url is the only part of the image object that is not optional in the xml schem
+            // so of course it's the only thing we can't currently get, because the api doesn't deliver the data for the original image
+            image.standard = imageObject.bild?.bild?.[0]?.versions?.original?.url || null
+            image.mimeType = imageObject.bild?.bild?.[0]?.versions?.original?.technical_metadata?.mime_type || null
+            image.yearOfOrigin = imageObject.bild?.entstehungsdatum?.value?.split('-')[0];
+
+            if (image.standard) {
+                returnImages.push(image)
+            }
+        }
+
+        return returnImages;
+    }
+
+    static async #getBundledImages(objects, accessToken) {
+
+        const imageIds = [];
+        objects.forEach(object => {
+            if (!Array.isArray(object.item['_reverse_nested:objekt__bild:lk_objekt'])) return
+            if (object.item['_reverse_nested:objekt__bild:lk_objekt'].length === 0) return
+
+            object.item['_reverse_nested:objekt__bild:lk_objekt'].forEach((imageData) => {
+                const lkBild = imageData.lk_bild
+                imageIds.push(lkBild._system_object_id)
+            })
+        });
+
+        if (imageIds.length === 0) {
+            return;
         }
 
         const searchPayload = {
@@ -867,31 +917,8 @@ class DenkxwebUtil {
             const imageObject = imageObjects[i];
             if (imageObject.bild.lk_veroeffentlichen.ja_nein_objekttyp._id !== 1) continue;
 
-            const image = {
-                identifier: imageObject._system_object_id,
-                description: imageObject.bild.titel,
-                standard: null,
-                preferred: imageObject._system_object_id === preferredImageId,
-                creator: imageObject.bild.urheberin,
-                rights: imageObject.bild.rechteinhaberin,
-                licence: "CC-BY-SA 4.0",
-                yearOfOrigin: null,
-                mimeType: null
-            }
-
-            // process.stdout.write(JSON.stringify(imageObject, null, 2))
-            // this url is the only part of the image object that is not optional in the xml schem
-            // so of course it's the only thing we can't currently get, because the api doesn't deliver the data for the original image
-            image.standard = imageObject.bild?.bild?.[0]?.versions?.original?.url || null
-            image.mimeType = imageObject.bild?.bild?.[0]?.versions?.original?.technical_metadata?.mime_type || null
-            image.yearOfOrigin = imageObject.bild?.entstehungsdatum?.value?.split('-')[0];
-
-            if (image.standard) {
-                returnImages.push(image)
-            }
+            IMAGE_MAP[imageObject._system_object_id] = imageObject
         }
-
-        return returnImages;
     }
 }
 
