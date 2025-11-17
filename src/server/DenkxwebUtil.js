@@ -31,7 +31,7 @@ const GROUP_MAP = {}
 const GROUP_MEMBER_MAP = {}
 // poylgon map: ouuid => poylgon object
 const POLYGON_MAP = {}
-// iamge map: system_object_id of the image object => array of image object
+// iamge map: system_object_id of the image object => image object
 const IMAGE_MAP = {}
 
 class DenkxwebUtil {
