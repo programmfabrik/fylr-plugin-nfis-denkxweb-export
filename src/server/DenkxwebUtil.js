@@ -846,7 +846,7 @@ class DenkxwebUtil {
 
             // this url is the only part of the image object that is not optional in the xml schem
             // so of course it's the only thing we can't currently get, because the api doesn't deliver the data for the original image
-            image.standard = imageObject.bild?.bild?.[0]?.versions?.original?.url || null
+            image.standard = imageObject.bild?.bild?.[0]?.versions?.original?.deep_link_url || null
             image.mimeType = imageObject.bild?.bild?.[0]?.versions?.original?.technical_metadata?.mime_type || null
             image.yearOfOrigin = imageObject.bild?.entstehungsdatum?.value?.split('-')[0];
 
