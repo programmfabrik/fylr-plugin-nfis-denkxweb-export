@@ -32,6 +32,7 @@ const baseSearchPayload = {
                     "bool": "should",
                     "type": "in",
                     "fields": [
+                        "flaeche._pool.pool._id",
                         "item._pool.pool._id"
                     ],
                     "in": []
@@ -43,8 +44,13 @@ const baseSearchPayload = {
                         {
                             "bool": "must_not",
                             "type": "in",
-                            "fields": ["_objecttype"],
-                            "in": ["item"]
+                            "fields": [
+                                "_objecttype"
+                            ],
+                            "in": [
+                                "flaeche",
+                                "item"
+                            ]
                         }
                     ]
                 }
@@ -76,7 +82,28 @@ const baseSearchPayload = {
                             "in": []
                         }
                     ],
-                    "bool": "must"
+                    "bool": "should"
+                },
+                {
+                    "type": "complex",
+                    "search": [
+                        {
+                            "type": "in",
+                            "mode": "fulltext",
+                            "bool": "must",
+                            "phrase": false,
+                            "fields": [
+                                "flaeche.lk_dante_art.conceptURI"
+                            ],
+                            "in": [
+                                "http://uri.gbv.de/terminology/nld_area_type/ccfbf900-5dbb-42d0-b5eb-cf4638ae85df",
+                                "http://uri.gbv.de/terminology/nld_area_type/e7e42a17-b6d1-4ad5-a9c1-0b33ad65ff09",
+                                "http://uri.gbv.de/terminology/nld_area_type/0d4cc26c-0a0d-4133-8ad5-bb73062a1206",
+                                "http://uri.gbv.de/terminology/nld_area_type/63f7be4e-84a4-4dc7-9e44-ca680ad8e55a"
+                            ]
+                        }
+                    ],
+                    "bool": "should"
                 }
             ]
         }
@@ -88,7 +115,7 @@ const baseSearchPayload = {
             "_level": 0
         }
     ],
-    "objecttypes": ["item"],
+    "objecttypes": ["flaeche", "item"],
     "timezone": "Europe/Berlin"
 }
 
