@@ -209,8 +209,21 @@ async function main() {
         getPoolsFromAPI(),
     ])
 
+    // check, if user has systemright to use the validation-endpoint, else throw error
+    let allowAccess = false;
+    if (sessionInfo.system_rights?.['plugin.nfis-denkxweb-export.nfis_denkxweb_export']?.use_denkxweb_endpoint == true) {
+        allowAccess = true;
+    }
+    if (sessionInfo.system_rights['system.root']) {
+        allowAccess = true;
+    }
+    if (allowAccess == false) {
+        throwError("Der User besitzt nicht das Systemrecht für die Nutzung des Monitoring-Endpoints", '');
+    }
+
     const pluginBaseConfigEnabled = sessionInfo.config.base.plugin['nfis-denkxweb-export'].config['nfis_denkxweb_export'];
     const pluginBaseConfigTagIds = sessionInfo.config.base.plugin['nfis-denkxweb-export'].config['nfis_tag_ids'];
+    const pluginBaseConfigPoolIds = sessionInfo.config.base.plugin['nfis-denkxweb-export'].config['nfis_pool_ids'];
     if (!pluginBaseConfigEnabled.enabled) {
         throwError("The endpoint is not activated.", '')
     }
@@ -227,25 +240,33 @@ async function main() {
         throwError("Tags-IDs not configured.", 'One or more tag ids are not set. An admin can set the tag ids in the base config for this plugin.')
     }
 
-    // check, if user has systemright to use the validation-endpoint, else throw error
-    let allowAccess = false;
-    if (sessionInfo.system_rights?.['plugin.nfis-denkxweb-export.nfis_denkxweb_export']?.use_denkxweb_endpoint == true) {
-        allowAccess = true;
-    }
-    if (sessionInfo.system_rights['system.root']) {
-        allowAccess = true;
-    }
-    if (allowAccess == false) {
-        throwError("Der User besitzt nicht das Systemrecht für die Nutzung des Monitoring-Endpoints", '');
+    const poolIdStrings = pluginBaseConfigPoolIds?.pool_ids?.split(',')
+    if (!Array.isArray(poolIdStrings) || (poolIdStrings.length < 2 && poolIdStrings[0].length === 0)) {
+        throwError("Pool-IDs not configured.", '');
     }
 
-    const poolIds = [];
-    pools.forEach(pool => {
-        // system root pool is fine, but we don't want objects without pool or objects in the trash bin.
-        if (pool.pool.reference && pool.pool.reference !== 'system:root') return;
-
-        poolIds.push(pool.pool._id)
+    const poolIds = []
+    const topLevelPoolIDs = [];
+    poolIdStrings.forEach(poolString => {
+        const poolId = Number.parseInt(poolString)
+        if (poolId && poolId !== NaN) {
+            topLevelPoolIDs.push(poolId)
+        }
     })
+    // only use pools that have an ID in topLevelPoolIDs or that have such an ID in their path
+    pools.forEach(pool => {
+        // pool is top level pool
+        if (topLevelPoolIDs.includes(pool.pool._id)) return poolIds.push(pool.pool._id)
+
+        // check if pool is a sub pool of our top level pools
+        pool._path.some(pathPool => {
+            if (topLevelPoolIDs.includes(pathPool.pool._id)) {
+                poolIds.push(pool.pool._id)
+                return true
+            }
+        })
+    })
+
     payload.search[0].search[0].in = poolIds;
 
     payload.search[1].search[0].search[1].in = [pluginBaseConfigTagIds.public];
@@ -295,7 +316,7 @@ async function main() {
 
     process.stdout.write(xml)
     // process.stdout.write(JSON.stringify(objects[1].item['_reverse_nested:objekt__bild:lk_objekt'], null, 2))
-    // process.stdout.write(JSON.stringify(xml, null, 2))
+    // process.stdout.write(JSON.stringify(poolIds, null, 2))
 
 
     // process.stdout.write(JSON.stringify(

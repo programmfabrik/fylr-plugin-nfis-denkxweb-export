@@ -20,6 +20,12 @@ base_config:
       enabled:
         type: bool
         position: 0
+  - name: nfis_pool_ids
+    group: nfis_denkxweb_export_pool_ids
+    parameters:
+      pool_ids:
+        type: text
+        position: 0
   - name: nfis_tag_ids
     group: nfis_denkxweb_export_tag_ids
     parameters:

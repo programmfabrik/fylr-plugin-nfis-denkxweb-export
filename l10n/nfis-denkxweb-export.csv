@@ -2,6 +2,8 @@ key,de-DE,en-US
 server.config.name.system.nfis_denkxweb_export,denkxweb-Endpoint,denkxweb-Endpoint
 server.config.parameter.system.nfis_denkxweb_export.enabled.label,Status,Status
 server.config.parameter.system.nfis_denkxweb_export.enabled.checkbox,Aktivieren,Activate
+server.config.name.system.nfis_pool_ids,Pool-IDs,Pool-IDs
+server.config.parameter.system.nfis_pool_ids.pool_ids.label,Pool-IDs (komma-getrennte Liste),Pool-IDs (comma-separated list)
 server.config.name.system.nfis_tag_ids,Tag-IDs,Tag-IDs
 server.config.parameter.system.nfis_tag_ids.level_0.label,Level 0 Tag ID,Level 0 Tag ID
 server.config.parameter.system.nfis_tag_ids.level_1.label,Level 1 Tag ID,Level 1 Tag ID
