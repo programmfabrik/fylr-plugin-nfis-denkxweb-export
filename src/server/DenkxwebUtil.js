@@ -79,7 +79,7 @@ class DenkxwebUtil {
 
         const monument = {
             '@': {
-                // 'debug:objecttype': object._objecttype,
+                'debug:objecttype': object._objecttype,
                 'xmlns:gml': "http://www.opengis.net/gml/3.2",
                 'xmlns': "http://www.rjm.de/denkxweb/denkxml",
                 'xmlns:xlink': "http://www.w3.org/1999/xlink",
@@ -181,6 +181,7 @@ class DenkxwebUtil {
                         '@gml_id': 'Image.' + image.identifier,
                         description: image.description,
                         standard: { '@url': image.standard, '@type': image.mimeType },
+                        filename: image.filename,
                         preferred: image.preferred,
                         creator: image.creator,
                         rights: image.rights,
@@ -1019,7 +1020,8 @@ class DenkxwebUtil {
                 rights: imageObject.bild.rechteinhaberin,
                 licence: "CC-BY-SA 4.0",
                 yearOfOrigin: null,
-                mimeType: null
+                mimeType: null,
+                filename: imageObject.bild?.bild?.[0]?.original_filename || null
             }
 
             // this url is the only part of the image object that is not optional in the xml schem
