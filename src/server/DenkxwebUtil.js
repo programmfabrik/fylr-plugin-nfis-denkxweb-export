@@ -180,7 +180,7 @@ class DenkxwebUtil {
                     image: {
                         '@gml_id': 'Image.' + image.identifier,
                         description: image.description,
-                        standard: { '@url': image.standard, '@type': image.mimeType },
+                        standard: { '@url': image.standard, '@fylrUrl': image.standard, '@type': image.mimeType },
                         filename: image.filename,
                         preferred: image.preferred,
                         creator: image.creator,
