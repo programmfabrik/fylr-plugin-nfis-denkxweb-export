@@ -1018,7 +1018,7 @@ class DenkxwebUtil {
 
         object.item['_reverse_nested:objekt__bild:lk_objekt'].forEach((imageData) => {
             const lkBild = imageData.lk_bild
-            if (!IMAGE_MAP[lkBild._system_object_id]) return
+            if (!lkBild || !IMAGE_MAP[lkBild._system_object_id]) return
 
             imageObjects.push(IMAGE_MAP[lkBild._system_object_id])
 
