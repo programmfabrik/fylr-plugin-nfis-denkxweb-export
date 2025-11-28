@@ -648,16 +648,16 @@ class DenkxwebUtil {
             const URIChunk = URIArray.slice(i, i + chunkSize);
             const URIListString = URIChunk.join('|');
             const danteApiUrl = `https://api.dante.gbv.de/data?uri=${URIListString}&properties=+hiddenLabel`
-            
+
             const request = fetch(danteApiUrl);
             requestArray.push(request)
         }
-        
+
         const responses = await Promise.all(requestArray);
-        
+
         const jsonPromises = []
         responses.forEach(response => jsonPromises.push(response.json()))
-        
+
         const themesJsonArray = await Promise.all(jsonPromises)
         themesJsonArray.forEach(themesJson => {
             for (let i = 0; i < themesJson.length; i++) {
@@ -1018,7 +1018,7 @@ class DenkxwebUtil {
 
         object.item['_reverse_nested:objekt__bild:lk_objekt'].forEach((imageData) => {
             const lkBild = imageData.lk_bild
-            if (!lkBild || !IMAGE_MAP[lkBild._system_object_id]) return
+            if (!lkBild?._system_object_id || !IMAGE_MAP[lkBild._system_object_id]) return
 
             imageObjects.push(IMAGE_MAP[lkBild._system_object_id])
 
@@ -1070,6 +1070,7 @@ class DenkxwebUtil {
 
             object.item['_reverse_nested:objekt__bild:lk_objekt'].forEach((imageData) => {
                 const lkBild = imageData.lk_bild
+                if (!lkBild?._system_object_id) return;
                 imageIds.push(lkBild._system_object_id)
             })
         });
