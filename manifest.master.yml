@@ -2,7 +2,7 @@ plugin:
   name: nfis-denkxweb-export
   version: 1.0
   l10n: l10n/nfis-denkxweb-export.csv
-  url: https://github.com/programmfabrik/fylr-plugin-monitoring
+  url: https://github.com/programmfabrik/fylr-plugin-nfis-denkxweb-export
   displayname:
     de-DE: nfis-denkxweb-export
     en-US: nfis-denkxweb-export

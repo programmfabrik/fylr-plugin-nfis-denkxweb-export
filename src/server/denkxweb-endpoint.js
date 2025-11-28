@@ -245,7 +245,7 @@ async function main() {
         allowAccess = true;
     }
     if (allowAccess == false) {
-        throwError("Der User besitzt nicht das Systemrecht für die Nutzung des Monitoring-Endpoints", '');
+        throwError("Der User besitzt nicht das Systemrecht für die Nutzung des Denkxweb-Endpoints", '');
     }
 
     const pluginBaseConfigEnabled = sessionInfo.config.base.plugin['nfis-denkxweb-export'].config['nfis_denkxweb_export'];
