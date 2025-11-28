@@ -640,20 +640,35 @@ class DenkxwebUtil {
         const URIArray = Object.keys(URIs)
         if (URIArray.length === 0) return []
 
-        const URIListString = URIArray.join('|');
-        const danteApiUrl = `https://api.dante.gbv.de/data?uri=${URIListString}&properties=+hiddenLabel`
-
-        const response = await fetch(danteApiUrl);
-        const themesJson = await response.json()
-
-        for (let i = 0; i < themesJson.length; i++) {
-            const theme = themesJson[i];
-            const label = theme.hiddenLabel?.de?.[0]
-            const URI = theme.uri
-            if (label && URI) {
-                THEMES_MAP[URI] = label
-            }
+        // This API only accepts GET-Parameters and the server has a request URI-Limit. 
+        // To get around that we need to request our URIs in chunks to stay below the limit.
+        const requestArray = [];
+        const chunkSize = 50;
+        for (let i = 0; i < URIArray.length; i += chunkSize) {
+            const URIChunk = URIArray.slice(i, i + chunkSize);
+            const URIListString = URIChunk.join('|');
+            const danteApiUrl = `https://api.dante.gbv.de/data?uri=${URIListString}&properties=+hiddenLabel`
+            
+            const request = fetch(danteApiUrl);
+            requestArray.push(request)
         }
+        
+        const responses = await Promise.all(requestArray);
+        
+        const jsonPromises = []
+        responses.forEach(response => jsonPromises.push(response.json()))
+        
+        const themesJsonArray = await Promise.all(jsonPromises)
+        themesJsonArray.forEach(themesJson => {
+            for (let i = 0; i < themesJson.length; i++) {
+                const theme = themesJson[i];
+                const label = theme.hiddenLabel?.de?.[0]
+                const URI = theme.uri
+                if (label && URI) {
+                    THEMES_MAP[URI] = label
+                }
+            }
+        })
     }
 
     static #getDatingFrom(event, item) {
