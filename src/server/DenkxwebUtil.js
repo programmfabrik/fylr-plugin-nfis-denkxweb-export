@@ -203,34 +203,38 @@ class DenkxwebUtil {
 
 
         // if polygon exists, point and linkDenkmalViewer should also exist
-        if (mappedData.polygon) {
-            monument.linkDenkmalViewer = { '@url': mappedData.linkDenkmalViewer };
-            monument.geoReference = {
-                position: {
-                    'gml:Point': {
-                        '@': {
-                            'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geopos.Geom_0`,
-                            srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
-                            srsDimension: '2'
-                        },
-                        'gml:pos': mappedData.point.geometry.coordinates.join(' '),
-                    }
-                },
-                surface: {
-                    'gml:MultiSurface': {
-                        '@': {
-                            'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geosurface.Geom_0`,
-                            srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
-                            srsDimension: '2'
-                        },
-                        'gml:surfaceMember': {
-                            'gml:Polygon': {
-                                '@': {
-                                    'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geosurface.Geom_1`,
-                                },
-                                'gml:exterior': {
-                                    'gml:LinearRing': {
-                                        'gml:posList': mappedData.polygon.geometry.coordinates.flat(2).join(' '),
+        if (mappedData.polygon && mappedData.point) {
+            const polygonCoordinates = mappedData.polygon?.geometry?.coordinates?.flat(2)
+            const pointCoordinates = mappedData.point?.geometry?.coordinates?.flat(2)
+            if (Array.isArray(polygonCoordinates) && Array.isArray(polygonCoordinates)) {
+                monument.linkDenkmalViewer = { '@url': mappedData.linkDenkmalViewer };
+                monument.geoReference = {
+                    position: {
+                        'gml:Point': {
+                            '@': {
+                                'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geopos.Geom_0`,
+                                srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
+                                srsDimension: '2'
+                            },
+                            'gml:pos': pointCoordinates.join(' '),
+                        }
+                    },
+                    surface: {
+                        'gml:MultiSurface': {
+                            '@': {
+                                'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geosurface.Geom_0`,
+                                srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
+                                srsDimension: '2'
+                            },
+                            'gml:surfaceMember': {
+                                'gml:Polygon': {
+                                    '@': {
+                                        'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geosurface.Geom_1`,
+                                    },
+                                    'gml:exterior': {
+                                        'gml:LinearRing': {
+                                            'gml:posList': polygonCoordinates.join(' '),
+                                        }
                                     }
                                 }
                             }
@@ -285,34 +289,38 @@ class DenkxwebUtil {
             monument.preferredImage = { '@xlink:href': mappedData.preferredImage };
         }
         // if polygon exists, point and linkDenkmalViewer should also exist
-        if (mappedData.polygon) {
-            monument.linkDenkmalViewer = { '@url': mappedData.linkDenkmalViewer };
-            monument.geoReference = {
-                position: {
-                    'gml:Point': {
-                        '@': {
-                            'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geopos.Geom_0`,
-                            srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
-                            srsDimension: '2'
-                        },
-                        'gml:pos': mappedData.point.geometry.coordinates.join(' '),
-                    }
-                },
-                surface: {
-                    'gml:MultiSurface': {
-                        '@': {
-                            'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geosurface.Geom_0`,
-                            srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
-                            srsDimension: '2'
-                        },
-                        'gml:surfaceMember': {
-                            'gml:Polygon': {
-                                '@': {
-                                    'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geosurface.Geom_1`,
-                                },
-                                'gml:exterior': {
-                                    'gml:LinearRing': {
-                                        'gml:posList': mappedData.polygon.geometry.coordinates.flat(2).join(' '),
+        if (mappedData.polygon && mappedData.point) {
+            const polygonCoordinates = mappedData.polygon?.geometry?.coordinates?.flat(2)
+            const pointCoordinates = mappedData.point?.geometry?.coordinates?.flat(2)
+            if (Array.isArray(polygonCoordinates) && Array.isArray(polygonCoordinates)) {
+                monument.linkDenkmalViewer = { '@url': mappedData.linkDenkmalViewer };
+                monument.geoReference = {
+                    position: {
+                        'gml:Point': {
+                            '@': {
+                                'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geopos.Geom_0`,
+                                srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
+                                srsDimension: '2'
+                            },
+                            'gml:pos': pointCoordinates.join(' '),
+                        }
+                    },
+                    surface: {
+                        'gml:MultiSurface': {
+                            '@': {
+                                'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geosurface.Geom_0`,
+                                srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
+                                srsDimension: '2'
+                            },
+                            'gml:surfaceMember': {
+                                'gml:Polygon': {
+                                    '@': {
+                                        'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geosurface.Geom_1`,
+                                    },
+                                    'gml:exterior': {
+                                        'gml:LinearRing': {
+                                            'gml:posList': polygonCoordinates.join(' '),
+                                        }
                                     }
                                 }
                             }
@@ -1004,7 +1012,7 @@ class DenkxwebUtil {
             return;
         }
         featureCollection.features.forEach(feature => {
-            if (feature?.properties?.ouuid) return
+            if (!feature?.properties?.ouuid || !Array.isArray(feature?.geometry?.coordinates)) return
             POLYGON_MAP[feature.properties.ouuid] = feature
         });
 
