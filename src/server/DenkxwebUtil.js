@@ -54,9 +54,20 @@ class DenkxwebUtil {
         for (let i = 0; i < objects.length; i++) {
             const object = objects[i];
 
-            const monument = await this.#getMonument(object, accessToken, tagIds)
-
+            var monument;
+            try {
+                monument = await this.#getMonument(object, accessToken, tagIds)
+            } catch (error) {
+                monument = {
+                    uuid: object._uuid,
+                    error: {
+                        message: error.toString(),
+                        stack: error.stack
+                    },
+                }
+            }
             dataForXml.monuments.monument.push(monument)
+
         }
 
         const doc = create({ encoding: 'utf-8' }, dataForXml);
