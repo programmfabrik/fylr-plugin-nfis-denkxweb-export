@@ -1012,14 +1012,15 @@ class DenkxwebUtil {
             return;
         }
         featureCollection.features.forEach(feature => {
-            if (!feature?.properties?.ouuid || !Array.isArray(feature?.geometry?.coordinates)) return
+            if (!feature?.properties?.ouuid) return
+            if (!Array.isArray(feature?.geometry?.coordinates) || feature.geometry.coordinates.length === 0) return
             POLYGON_MAP[feature.properties.ouuid] = feature
         });
 
     }
 
     static #getLinkDenkmalViewer(point) {
-        if (!Array.isArray(point.geometry?.coordinates)) return null;
+        if (!Array.isArray(point.geometry?.coordinates) || point.geometry?.coordinates?.length < 2) return null;
         const x = Math.round(point.geometry.coordinates[0]);
         const y = Math.round(point.geometry.coordinates[1]);
 
