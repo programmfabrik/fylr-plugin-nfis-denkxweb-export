@@ -1030,7 +1030,7 @@ class DenkxwebUtil {
 
         for (let i = 0; i < imageObjects.length; i++) {
             const imageObject = imageObjects[i];
-            if (!imageObject.bild || imageObject.bild?.lk_veroeffentlichen.ja_nein_objekttyp._id !== 1) continue;
+            if (!imageObject.bild || imageObject.bild?.lk_veroeffentlichen?.ja_nein_objekttyp?._id !== 1) continue;
 
             const image = {
                 identifier: imageObject._system_object_id,
@@ -1118,7 +1118,7 @@ class DenkxwebUtil {
 
         for (let i = 0; i < imageObjects.length; i++) {
             const imageObject = imageObjects[i];
-            if (!imageObject.bild || imageObject.bild.lk_veroeffentlichen.ja_nein_objekttyp._id !== 1) continue;
+            if (!imageObject.bild || imageObject.bild?.lk_veroeffentlichen?.ja_nein_objekttyp?._id !== 1) continue;
 
             IMAGE_MAP[imageObject._system_object_id] = imageObject
         }
