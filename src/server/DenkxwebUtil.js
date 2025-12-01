@@ -173,21 +173,19 @@ class DenkxwebUtil {
         }
 
         if (mappedData.images.length > 0) {
-            monument.images = []
+            monument.images = { image: [] }
 
             mappedData.images.forEach(image => {
-                monument.images.push({
-                    image: {
-                        '@gml_id': 'Image.' + image.identifier,
-                        description: image.description,
-                        standard: { '@url': image.standard, '@fylrUrl': image.standard, '@type': image.mimeType },
-                        filename: image.filename,
-                        preferred: image.preferred,
-                        creator: image.creator,
-                        rights: image.rights,
-                        licence: image.licence,
-                        yearOfOrigin: image.yearOfOrigin,
-                    }
+                monument.images.image.push({
+                    '@gml_id': 'Image.' + image.identifier,
+                    description: image.description,
+                    standard: { '@url': image.standard, '@fylrUrl': image.standard, '@type': image.mimeType },
+                    filename: image.filename,
+                    preferred: image.preferred,
+                    creator: image.creator,
+                    rights: image.rights,
+                    licence: image.licence,
+                    yearOfOrigin: image.yearOfOrigin,
                 })
             })
         }
