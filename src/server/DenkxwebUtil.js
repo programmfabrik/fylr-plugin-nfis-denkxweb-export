@@ -325,7 +325,7 @@ class DenkxwebUtil {
             fylrId: object._system_object_id,                                                                           // Done
             uuid: object._uuid,                                                                                         // Done
             adabwebId: null,                                                                                            // Done
-            layer: object?.item._pool?._path?.[2]?.pool?.name?.['de-DE'] || null,                                       // Done
+            layer: object?.item?._pool?._path?.[2]?.pool?.name?.['de-DE'] || null,                                       // Done
             level: null,                                                                                                // Done
             country: "DE",                                                                                              // Done CL: "DE als Standardwert setzen oder aus der Konfiguration nehmen. Wird im Portal offenbar nicht verwendet."
             state: null,                                                                                                // Done
@@ -363,7 +363,7 @@ class DenkxwebUtil {
             internetReference: [],                                                                                      // Done
             notablePersons: [],                                                                                         // Done
             preferredImage: null,                                                                                       // Done
-            images: []                  // TODO
+            images: []                                                                                                  // Done
         }
 
         const politicalAffiliation = object.item?.['_nested:item__politische_zugehoerigkeit']?.[0]
@@ -993,6 +993,7 @@ class DenkxwebUtil {
             return;
         }
         featureCollection.features.forEach(feature => {
+            if (feature?.properties?.ouuid) return
             POLYGON_MAP[feature.properties.ouuid] = feature
         });
 
@@ -1029,7 +1030,7 @@ class DenkxwebUtil {
 
         for (let i = 0; i < imageObjects.length; i++) {
             const imageObject = imageObjects[i];
-            if (imageObject.bild.lk_veroeffentlichen.ja_nein_objekttyp._id !== 1) continue;
+            if (!imageObject.bild || imageObject.bild?.lk_veroeffentlichen.ja_nein_objekttyp._id !== 1) continue;
 
             const image = {
                 identifier: imageObject._system_object_id,
@@ -1117,7 +1118,7 @@ class DenkxwebUtil {
 
         for (let i = 0; i < imageObjects.length; i++) {
             const imageObject = imageObjects[i];
-            if (imageObject.bild.lk_veroeffentlichen.ja_nein_objekttyp._id !== 1) continue;
+            if (!imageObject.bild || imageObject.bild.lk_veroeffentlichen.ja_nein_objekttyp._id !== 1) continue;
 
             IMAGE_MAP[imageObject._system_object_id] = imageObject
         }
