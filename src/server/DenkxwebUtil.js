@@ -721,7 +721,7 @@ class DenkxwebUtil {
                 fId: object._system_object_id,
                 buildingType: this.#getBuildingType(fullParent),
                 // linkDda: null,
-                linkDda: `https://denkmalatlas.niedersachsen.de/viewer/metadata/${fullParent._uuid}`,
+                linkDda: fullParent._uuid,
             });
         });
 
@@ -816,7 +816,7 @@ class DenkxwebUtil {
                 buildingType: this.#getBuildingType(member),
                 address: null,
                 // linkDda: null,
-                linkDda: `https://denkmalatlas.niedersachsen.de/viewer/metadata/${member._uuid}`,
+                linkDda: member._uuid,
             }
 
             const currentAddress = member.item?.['_nested:item__anschrift']?.find((address) => address.lk_adresstyp?.conceptURI === CURRENT_ADDRESS_URI)
