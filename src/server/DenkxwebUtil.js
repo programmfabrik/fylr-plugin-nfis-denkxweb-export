@@ -1,5 +1,9 @@
 const { pointOnFeature } = require('@turf/point-on-feature');
 const { create } = require('xmlbuilder2');
+const { Readable } = require('stream');
+const { parser } = require('stream-json');
+const { pick } = require('stream-json/filters/Pick');
+const { streamArray } = require('stream-json/streamers/StreamArray');
 
 const LOCAL_TZ = "Europe/Berlin";
 const TAG_IDS = {
@@ -1167,21 +1171,29 @@ class DenkxwebUtil {
 
         const responses = await Promise.all(requestArray);
 
+        // For some reason some responses can be more than 500 MB in size.
+        // Node cannot handle a string larger than 256 MB and it will crash if we try to get the json of such a response in one go
+        // That's why we use stream-json to parse incrementally
         const jsonPromises = []
-        responses.forEach(response => jsonPromises.push(response.json()))
+        responses.forEach(res => {
+            const nodeStream = Readable.fromWeb(res.body);
+            const promise = new Promise((resolve, reject) => {
+                nodeStream
+                    .pipe(parser())      // parse JSON incrementally
+                    .pipe(pick({ filter: 'objects' }))
+                    .pipe(streamArray())
+                    .on('data', ({ key, value }) => { // key = index, value = imageObject
+                        if (!value.bild || value.bild?.lk_veroeffentlichen?.ja_nein_objekttyp?._id !== 1) return;
 
-        const imagesObjectsJsonArray = await Promise.all(jsonPromises)
+                        IMAGE_MAP[value._system_object_id] = value
+                    })
+                    .on('end', resolve)
+                    .on('error', reject);
+            });
+            jsonPromises.push(promise)
+        })
 
-        imagesObjectsJsonArray.forEach(images => {
-            const imageObjects = images.objects
-            for (let i = 0; i < imageObjects.length; i++) {
-                const imageObject = imageObjects[i];
-                if (!imageObject.bild || imageObject.bild?.lk_veroeffentlichen?.ja_nein_objekttyp?._id !== 1) continue;
-
-                IMAGE_MAP[imageObject._system_object_id] = imageObject
-            }
-        });
-
+        await Promise.all(jsonPromises)
     }
 
     static #getBuildingType(object) {

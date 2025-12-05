@@ -3,6 +3,7 @@
         "@turf/point-on-feature": "^7.2.0",
         "flatted": "^3.3.3",
         "https": "^1.0.0",
+        "stream-json": "^1.9.1",
         "xmlbuilder2": "^3.1.1"
     }
 }
