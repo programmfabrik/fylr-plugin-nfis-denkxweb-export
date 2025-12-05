@@ -136,7 +136,7 @@ class DenkxwebUtil {
             authoritativeRepresentation: { '@url': mappedData.authoritativeRepresentation },
             datingFrom: mappedData.datingFrom,
             ppnReference: mappedData.ppnReference,
-            internetReference: mappedData.internetReference,
+            internetReference: [],
         }
 
         if (mappedData.preferredImage) {
@@ -152,6 +152,14 @@ class DenkxwebUtil {
                     '@role': person.role,
                     name: person.name,
                 });
+            })
+        }
+
+        if (mappedData.internetReference.length > 0) {
+            mappedData.internetReference.forEach(internetReference => {
+                monument.internetReference.push({
+                    InternetReference: internetReference
+                })
             })
         }
 
