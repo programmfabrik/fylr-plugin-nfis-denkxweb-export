@@ -734,55 +734,65 @@ class DenkxwebUtil {
 
         if (parentIds.length === 0) return
 
-
-        const searchPayload = {
-            "offset": 0,
-            "limit": parentIds.length,
-            "format": "long",
-            "search": [
-                {
-                    "type": "complex",
-                    "__filter": "SearchInput",
-                    "search": [
-                        {
-                            "type": "complex",
-                            "search": [
-                                {
-                                    "type": "in",
-                                    "in": parentIds,
-                                    "fields": ["_system_object_id"],
-                                    "bool": "must"
-                                }
-                            ],
-                            "bool": "must"
-                        }
-                    ]
-                }
-            ],
-            "objecttypes": ["item"],
+        const requestArray = [];
+        const chunkSize = 1000;
+        for (let i = 0; i < parentIds.length; i += chunkSize) {
+            const parentIdsChunk = parentIds.slice(i, i + chunkSize);
+            const searchPayload = {
+                "offset": 0,
+                "limit": 1000,
+                "format": "long",
+                "search": [
+                    {
+                        "type": "complex",
+                        "__filter": "SearchInput",
+                        "search": [
+                            {
+                                "type": "complex",
+                                "search": [
+                                    {
+                                        "type": "in",
+                                        "in": parentIdsChunk,
+                                        "fields": ["_system_object_id"],
+                                        "bool": "must"
+                                    }
+                                ],
+                                "bool": "must"
+                            }
+                        ]
+                    }
+                ],
+                "objecttypes": ["item"],
+            }
+            const request = fetch('http://fylr.localhost:8081/api/v1/search?pretty=0', {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + accessToken,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(searchPayload),
+            })
+            requestArray.push(request)
         }
 
-        const response = await fetch('http://fylr.localhost:8081/api/v1/search?pretty=0', {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + accessToken,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(searchPayload),
-        })
-        const jsonResponse = await response.json()
+        const responses = await Promise.all(requestArray);
 
+        const jsonPromises = []
+        responses.forEach(response => jsonPromises.push(response.json()))
 
-        const parents = jsonResponse?.objects?.filter((parent) => {
-            return parent.item?.['_nested:item__objektkategorie']?.some((category) => {
-                return category.lk_objektkategorie?.conceptURI === PARENT_OBJECT_TYPE_URI
+        const parentsJsonArray = await Promise.all(jsonPromises)
+
+        parentsJsonArray.forEach(parents => {
+            parents?.objects?.forEach(parent => {
+                const hasParentObjectType = parent.item?.['_nested:item__objektkategorie']?.some((category) => {
+                    return category.lk_objektkategorie?.conceptURI === PARENT_OBJECT_TYPE_URI
+                })
+
+                if (!hasParentObjectType) return;
+
+                GROUP_MAP[parent._system_object_id] = parent;
             })
         })
-
-        for (let i = 0; i < parents.length; i++) {
-            const parent = parents[i];
-            GROUP_MAP[parent._system_object_id] = parent;
-        }
     }
 
     static #getGroupMembers(object) {
@@ -1097,51 +1107,64 @@ class DenkxwebUtil {
         if (imageIds.length === 0) {
             return;
         }
-
-        const searchPayload = {
-            "offset": 0,
-            "limit": imageIds.length,
-            "format": "long",
-            "search": [
-                {
-                    "type": "complex",
-                    "__filter": "SearchInput",
-                    "search": [
-                        {
-                            "type": "complex",
-                            "search": [
-                                {
-                                    "type": "in",
-                                    "in": imageIds,
-                                    "fields": ["_system_object_id"],
-                                    "bool": "must"
-                                }
-                            ],
-                            "bool": "must"
-                        }
-                    ]
-                }
-            ],
-            "objecttypes": ["bild"],
+        const requestArray = [];
+        const chunkSize = 1000;
+        for (let i = 0; i < imageIds.length; i += chunkSize) {
+            const imageIdsChunk = imageIds.slice(i, i + chunkSize);
+            const searchPayload = {
+                "offset": 0,
+                "limit": 1000,
+                "format": "long",
+                "search": [
+                    {
+                        "type": "complex",
+                        "__filter": "SearchInput",
+                        "search": [
+                            {
+                                "type": "complex",
+                                "search": [
+                                    {
+                                        "type": "in",
+                                        "in": imageIdsChunk,
+                                        "fields": ["_system_object_id"],
+                                        "bool": "must"
+                                    }
+                                ],
+                                "bool": "must"
+                            }
+                        ]
+                    }
+                ],
+                "objecttypes": ["bild"],
+            }
+            const request = fetch('http://fylr.localhost:8081/api/v1/search?pretty=0', {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + accessToken,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(searchPayload),
+            })
+            requestArray.push(request)
         }
 
-        const response = await fetch('http://fylr.localhost:8081/api/v1/search?pretty=0', {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + accessToken,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(searchPayload),
-        })
-        const jsonResponse = await response.json()
-        const imageObjects = jsonResponse.objects
+        const responses = await Promise.all(requestArray);
 
-        for (let i = 0; i < imageObjects.length; i++) {
-            const imageObject = imageObjects[i];
-            if (!imageObject.bild || imageObject.bild?.lk_veroeffentlichen?.ja_nein_objekttyp?._id !== 1) continue;
+        const jsonPromises = []
+        responses.forEach(response => jsonPromises.push(response.json()))
 
-            IMAGE_MAP[imageObject._system_object_id] = imageObject
-        }
+        const imagesObjectsJsonArray = await Promise.all(jsonPromises)
+
+        imagesObjectsJsonArray.forEach(images => {
+            const imageObjects = images.objects
+            for (let i = 0; i < imageObjects.length; i++) {
+                const imageObject = imageObjects[i];
+                if (!imageObject.bild || imageObject.bild?.lk_veroeffentlichen?.ja_nein_objekttyp?._id !== 1) continue;
+
+                IMAGE_MAP[imageObject._system_object_id] = imageObject
+            }
+        });
+
     }
 
     static #getBuildingType(object) {
