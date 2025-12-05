@@ -837,34 +837,43 @@ class DenkxwebUtil {
         });
         if (parentIds.length === 0) return
 
+        const limit = 1000
+        let offset = 0
+        let total = 0
+        const responseObjects = []
+        do {
+            const searchPayload = {
+                "offset": offset,
+                "limit": limit,
+                "format": "long",
+                "search": [
+                    {
+                        "type": "in",
+                        "in": parentIds,
+                        "fields": ["item._parents.item._id"],
+                        "bool": "must"
+                    }
 
-        const searchPayload = {
-            "offset": 0,
-            "limit": 1000,
-            "format": "long",
-            "search": [
-                {
-                    "type": "in",
-                    "in": parentIds,
-                    "fields": ["item._parents.item._id"],
-                    "bool": "must"
-                }
+                ],
+                "objecttypes": ["item"],
+            }
+            const response = await fetch('http://fylr.localhost:8081/api/v1/search?pretty=0', {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + accessToken,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(searchPayload),
+            })
+            const jsonResponse = await response.json();
 
-            ],
-            "objecttypes": ["item"],
-        }
+            responseObjects.push(...jsonResponse.objects)
 
-        const response = await fetch('http://fylr.localhost:8081/api/v1/search?pretty=0', {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + accessToken,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(searchPayload),
-        })
+            total = jsonResponse.count
+            offset += limit
+        } while (total > offset);
 
-        const jsonResponse = await response.json()
-        const members = jsonResponse?.objects?.filter((parent) => {
+        const members = responseObjects?.filter((parent) => {
             return parent._tags?.some(tag => tag._id === tagIds.public)
         })
 
