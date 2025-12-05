@@ -1172,7 +1172,7 @@ class DenkxwebUtil {
         const responses = await Promise.all(requestArray);
 
         // For some reason some responses can be more than 500 MB in size.
-        // Node cannot handle a string larger than 256 MB and it will crash if we try to get the json of such a response in one go
+        // Node cannot handle a string larger than 512 MB and it will crash if we try to get the json of such a response in one go
         // That's why we use stream-json to parse incrementally
         const jsonPromises = []
         responses.forEach(res => {
