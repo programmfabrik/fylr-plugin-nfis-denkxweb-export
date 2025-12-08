@@ -111,7 +111,8 @@ const baseSearchPayload = {
     "sort": [
         {
             "field": "_system_object_id",
-            "order": "DESC",
+            // "order": "DESC",
+            "order": "ASC",
             "_level": 0
         }
     ],
