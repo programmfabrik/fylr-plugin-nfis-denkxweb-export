@@ -6,16 +6,7 @@ const { pick } = require('stream-json/filters/Pick');
 const { streamArray } = require('stream-json/streamers/StreamArray');
 
 const LOCAL_TZ = "Europe/Berlin";
-const TAG_IDS = {
-    LEVEL_0: 2,
-    LEVEL_1: 5,
-    LEVEL_2: 3,
-    LEVEL_3: 4,
-    DIRECTORY_OBJECT: 1,
-    NOT_DIRECTORY_OBJECT: 20,
-    PUBLIC: 6,
-    NOT_PUBLIC: 7,
-}
+
 const CURRENT_ADDRESS_URI = 'http://uri.gbv.de/terminology/nld_address_type/9ee12d18-d708-4ccb-b7fc-8a64b6e3d445'
 const OBJECT_DESCRIPTION_URI = 'http://uri.gbv.de/terminology/nld_description_type/3000dc03-7089-45ad-8f62-170c34d3f8b8'
 const REASON_DESCRIPTION_URI = 'http://uri.gbv.de/terminology/nld_description_type/cc0e8011-29f5-41af-8d14-c05e3652654e'
