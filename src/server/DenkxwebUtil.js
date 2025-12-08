@@ -1134,6 +1134,7 @@ class DenkxwebUtil {
                         "search": [
                             {
                                 "type": "complex",
+                                "bool": "must",
                                 "search": [
                                     {
                                         "type": "in",
@@ -1141,6 +1142,15 @@ class DenkxwebUtil {
                                         "fields": ["_system_object_id"],
                                         "bool": "must"
                                     }
+                                ],
+                            },
+                            {
+                                "type": "in",
+                                "fields": [
+                                    "bild.lk_veroeffentlichen.ja_nein_objekttyp._id"
+                                ],
+                                "in": [
+                                    1
                                 ],
                                 "bool": "must"
                             }
@@ -1174,8 +1184,6 @@ class DenkxwebUtil {
                     .pipe(pick({ filter: 'objects' }))
                     .pipe(streamArray())
                     .on('data', ({ key, value }) => { // key = index, value = imageObject
-                        if (!value.bild || value.bild?.lk_veroeffentlichen?.ja_nein_objekttyp?._id !== 1) return;
-
                         IMAGE_MAP[value._system_object_id] = value
                     })
                     .on('end', resolve)
