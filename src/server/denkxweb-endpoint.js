@@ -1,4 +1,10 @@
 // GET /api/v1/plugin/extension/nfis-denkxweb-export/export
+const { Readable } = require('stream');
+const { parser } = require('stream-json');
+const { pick } = require('stream-json/filters/Pick');
+const { ignore } = require('stream-json/filters/Ignore');
+const { streamObject } = require('stream-json/streamers/StreamObject');
+const { streamArray } = require('stream-json/streamers/StreamArray');
 
 const DenkxwebUtil = require('./DenkxwebUtil');
 
@@ -330,13 +336,45 @@ async function main() {
         body: JSON.stringify(payload),
     })
 
-    const jsonResponse = await response.json();
-    const objects = jsonResponse?.objects;
+    let objects = [];
+    let total = 0;
+    let offset = 0;
+    let limit = 0;
+
+    const nodeStream = Readable.fromWeb(response.body);
+    const parsed = nodeStream.pipe(parser());
+
+    const metaDone = new Promise((resolve, reject) => {
+        parsed
+            .pipe(ignore({ filter: 'objects' }))
+            .pipe(streamObject())
+            .on('data', ({ key, value }) => {
+                if (key === 'count') total = value;
+                if (key === 'offset') offset = value;
+                if (key === 'limit') limit = value;
+            })
+            .on('end', resolve)
+            .on('error', reject);
+    });
+
+    const objectsDone = new Promise((resolve, reject) => {
+        parsed
+            .pipe(pick({ filter: 'objects' }))
+            .pipe(streamArray())
+            .on('data', ({ value }) => {
+                objects.push(value)
+            })
+            .on('end', resolve)
+            .on('error', reject);
+    });
+
+    await Promise.all([metaDone, objectsDone]);
+
     const responseMetaData = {
         count: objects?.length || 0,
-        total: jsonResponse.count,
-        offset: jsonResponse.offset,
-        limit: jsonResponse.limit,
+        total: total,
+        offset: offset,
+        limit: limit,
     }
     // process.stdout.write(JSON.stringify(jsonResponse, null, 2))
 

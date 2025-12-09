@@ -3,7 +3,9 @@ const { create } = require('xmlbuilder2');
 const { Readable } = require('stream');
 const { parser } = require('stream-json');
 const { pick } = require('stream-json/filters/Pick');
+const { ignore } = require('stream-json/filters/Ignore');
 const { streamArray } = require('stream-json/streamers/StreamArray');
+const { streamObject } = require('stream-json/streamers/StreamObject');
 
 const LOCAL_TZ = "Europe/Berlin";
 
@@ -781,21 +783,28 @@ class DenkxwebUtil {
         const responses = await Promise.all(requestArray);
 
         const jsonPromises = []
-        responses.forEach(response => jsonPromises.push(response.json()))
+        responses.forEach(res => {
+            const nodeStream = Readable.fromWeb(res.body);
+            const promise = new Promise((resolve, reject) => {
+                nodeStream
+                    .pipe(parser())      // parse JSON incrementally
+                    .pipe(pick({ filter: 'objects' }))
+                    .pipe(streamArray())
+                    .on('data', ({ value }) => {
+                        const hasParentObjectType = value.item?.['_nested:item__objektkategorie']?.some((category) => {
+                            return category.lk_objektkategorie?.conceptURI === PARENT_OBJECT_TYPE_URI
+                        })
+                        if (!hasParentObjectType) return;
 
-        const parentsJsonArray = await Promise.all(jsonPromises)
-
-        parentsJsonArray.forEach(parents => {
-            parents?.objects?.forEach(parent => {
-                const hasParentObjectType = parent.item?.['_nested:item__objektkategorie']?.some((category) => {
-                    return category.lk_objektkategorie?.conceptURI === PARENT_OBJECT_TYPE_URI
-                })
-
-                if (!hasParentObjectType) return;
-
-                GROUP_MAP[parent._system_object_id] = parent;
-            })
+                        GROUP_MAP[value._system_object_id] = value;
+                    })
+                    .on('end', resolve)
+                    .on('error', reject);
+            });
+            jsonPromises.push(promise)
         })
+
+        await Promise.all(jsonPromises)
     }
 
     static #getGroupMembers(object) {
@@ -843,7 +852,7 @@ class DenkxwebUtil {
         const limit = 1000
         let offset = 0
         let total = 0
-        const responseObjects = []
+
         do {
             const searchPayload = {
                 "offset": offset,
@@ -868,30 +877,46 @@ class DenkxwebUtil {
                 },
                 body: JSON.stringify(searchPayload),
             })
-            const jsonResponse = await response.json();
 
-            responseObjects.push(...jsonResponse.objects)
+            const nodeStream = Readable.fromWeb(response.body);
+            const parsed = nodeStream.pipe(parser());
 
-            total = jsonResponse.count
+            const totalPromise = new Promise((resolve, reject) => {
+                parsed
+                    .pipe(ignore({ filter: 'objects' }))
+                    .pipe(streamObject())
+                    .on('data', ({ key, value }) => {
+                        if (key === 'count') total = value
+                    })
+                    .on('end', resolve)
+                    .on('error', reject);
+            });
+
+            const membersPromise = new Promise((resolve, reject) => {
+                parsed
+                    .pipe(pick({ filter: 'objects' }))
+                    .pipe(streamArray())
+                    .on('data', ({ key, value }) => {
+                        if (!value._tags?.some(tag => tag._id === tagIds.public)) return;
+
+                        const parents = value?.item?._parents
+                        if (!Array.isArray(parents)) return;
+
+                        parents.forEach(parent => {
+                            if (!Array.isArray(GROUP_MEMBER_MAP[parent._system_object_id])) {
+                                GROUP_MEMBER_MAP[parent._system_object_id] = []
+                            }
+                            GROUP_MEMBER_MAP[parent._system_object_id].push(value);
+                        });
+                    })
+                    .on('end', resolve)
+                    .on('error', reject);
+            });
+
+            await Promise.all([totalPromise, membersPromise])
+
             offset += limit
         } while (total > offset);
-
-        const members = responseObjects?.filter((parent) => {
-            return parent._tags?.some(tag => tag._id === tagIds.public)
-        })
-
-        for (let i = 0; i < members.length; i++) {
-            const member = members[i];
-            const parents = member?.item?._parents
-            if (!Array.isArray(parents)) continue;
-
-            parents.forEach(parent => {
-                if (!Array.isArray(GROUP_MEMBER_MAP[parent._system_object_id])) {
-                    GROUP_MEMBER_MAP[parent._system_object_id] = []
-                }
-                GROUP_MEMBER_MAP[parent._system_object_id].push(member);
-            });
-        }
 
     }
 
