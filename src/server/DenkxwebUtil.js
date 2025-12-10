@@ -971,12 +971,20 @@ class DenkxwebUtil {
 
     static #getNotablePersons(object) {
         const persons = [];
-        const creationEvent = object.item?.['_nested:item__event']?.find((event) => {
-            const correctType = event.lk_eventtyp?.conceptURI === CREATION_EVENT_TYPE_URI;
+        const events = object.item?.['_nested:item__event']?.filter((event) => {
             const isPublic = event.lk_veroeffentlichen?.ja_nein_objekttyp?._id === 1
-            return correctType && isPublic
+
+            return isPublic
         })
-        const eventPersons = creationEvent?.['_nested:item__event__person_institution']
+        const eventPersons = [];
+        for (let i = 0; i < events.length; i++) {
+            const event = events[i];
+            const persons = event?.['_nested:item__event__person_institution']
+            if (!persons || persons.length === 0) continue;
+
+            eventPersons.push(...persons);
+
+        }
 
         if (!eventPersons || eventPersons.length === 0) {
             const importField = object.item?.['_nested:item__importfelder']?.filter((field) => field.name === 'Beteiligte Person')
@@ -992,7 +1000,6 @@ class DenkxwebUtil {
 
             return persons;
         }
-
 
         for (let i = 0; i < eventPersons.length; i++) {
             const eventPerson = eventPersons[i];
