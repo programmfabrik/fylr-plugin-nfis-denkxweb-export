@@ -207,12 +207,11 @@ class DenkxwebUtil {
         }
 
 
-        // if polygon exists, point and linkDenkmalViewer should also exist
+        // if polygon exists, then point should also exist
         if (mappedData.polygon && mappedData.point) {
             const polygonCoordinates = mappedData.polygon?.geometry?.coordinates?.flat(2)
             const pointCoordinates = mappedData.point?.geometry?.coordinates?.flat(2)
             if (Array.isArray(polygonCoordinates) && Array.isArray(polygonCoordinates)) {
-                monument.linkDenkmalViewer = { '@url': mappedData.linkDenkmalViewer };
                 monument.geoReference = {
                     position: {
                         'gml:Point': {
@@ -293,12 +292,11 @@ class DenkxwebUtil {
         if (mappedData.preferredImage) {
             monument.preferredImage = { '@xlink:href': mappedData.preferredImage };
         }
-        // if polygon exists, point and linkDenkmalViewer should also exist
+        // if polygon exists, then point should also exist
         if (mappedData.polygon && mappedData.point) {
             const polygonCoordinates = mappedData.polygon?.geometry?.coordinates?.flat(2)
             const pointCoordinates = mappedData.point?.geometry?.coordinates?.flat(2)
             if (Array.isArray(polygonCoordinates) && Array.isArray(polygonCoordinates)) {
-                monument.linkDenkmalViewer = { '@url': mappedData.linkDenkmalViewer };
                 monument.geoReference = {
                     position: {
                         'gml:Point': {
@@ -376,7 +374,6 @@ class DenkxwebUtil {
             licence: "CC BY-SA 4.0",                                                                                    // done
             ddaObj: null,                                                                                               // Done
             linkAdabweb: `https://nfis.gbv.de/#/detail/${object._uuid}`,                                                // Done
-            linkDenkmalViewer: null,                                                                                    // Done
             authoritativeRepresentation: 'https://denkmalpflege.niedersachsen.de/startseite/',                          // Done
             datingFrom: null,                                                                                           // Done
             point: null,                                                                                                // Done
@@ -516,7 +513,6 @@ class DenkxwebUtil {
 
         if (result.polygon) {
             result.point = pointOnFeature(result.polygon);
-            result.linkDenkmalViewer = this.#getLinkDenkmalViewer(result.point)
         }
 
         return result
@@ -573,7 +569,6 @@ class DenkxwebUtil {
 
         if (result.polygon) {
             result.point = pointOnFeature(result.polygon);
-            result.linkDenkmalViewer = this.#getLinkDenkmalViewer(result.point)
         }
 
         return result
@@ -1073,14 +1068,6 @@ class DenkxwebUtil {
 
     }
 
-    static #getLinkDenkmalViewer(point) {
-        if (!Array.isArray(point.geometry?.coordinates) || point.geometry?.coordinates?.length < 2) return null;
-        const x = Math.round(point.geometry.coordinates[0]);
-        const y = Math.round(point.geometry.coordinates[1]);
-
-        const link = `https://maps.lgln.niedersachsen.de/nld/mapbender/application/denkmalatlas?poi[point]=${x},${y}&poi[scale]=5000`;
-        return link;
-    }
 
     static #getImages(object, preferredImageId) {
         if (!Array.isArray(object.item['_reverse_nested:objekt__bild:lk_objekt'])) return []
