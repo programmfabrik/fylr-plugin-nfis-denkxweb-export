@@ -859,6 +859,14 @@ class DenkxwebUtil {
                         "in": parentIds,
                         "fields": ["item._parents.item._id"],
                         "bool": "must"
+                    },
+                    {
+                        "type": "in",
+                        "bool": "must",
+                        "fields": [
+                            "_tags._id"
+                        ],
+                        "in": [tagIds.public]
                     }
 
                 ],
@@ -892,8 +900,6 @@ class DenkxwebUtil {
                     .pipe(pick({ filter: 'objects' }))
                     .pipe(streamArray())
                     .on('data', ({ key, value }) => {
-                        if (!value._tags?.some(tag => tag._id === tagIds.public)) return;
-
                         const parents = value?.item?._parents
                         if (!Array.isArray(parents)) return;
 
