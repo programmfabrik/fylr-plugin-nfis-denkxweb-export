@@ -41,7 +41,7 @@ class DenkxwebUtil {
         // to save time we will try to reduce the number of requests to 3rd party APIs as much as possible.
         // To do that we bundle most of our API-requests.
         const themesPromise = this.#getBundledThemes(objects)
-        const groupsPromise = this.#getBundledGroups(objects, accessToken)
+        const groupsPromise = this.#getBundledGroups(objects, accessToken, tagIds)
         const groupMembersPromise = this.#getBundledGroupMembers(objects, accessToken, tagIds)
         const polygonPromise = this.#getBundledPolygons(objects, geoserverAuth)
         const imagePromise = this.#getBundledImages(objects, accessToken)
@@ -720,7 +720,7 @@ class DenkxwebUtil {
         return groups;
     }
 
-    static async #getBundledGroups(objects, accessToken) {
+    static async #getBundledGroups(objects, accessToken, tagIds) {
         const parentIds = [];
 
         objects.forEach(object => {
@@ -748,16 +748,20 @@ class DenkxwebUtil {
                         "__filter": "SearchInput",
                         "search": [
                             {
-                                "type": "complex",
-                                "search": [
-                                    {
-                                        "type": "in",
-                                        "in": parentIdsChunk,
-                                        "fields": ["_system_object_id"],
-                                        "bool": "must"
-                                    }
+                                "type": "in",
+                                "in": parentIdsChunk,
+                                "fields": [
+                                    "_system_object_id"
                                 ],
                                 "bool": "must"
+                            },
+                            {
+                                "type": "in",
+                                "bool": "must",
+                                "fields": [
+                                    "_tags._id"
+                                ],
+                                "in": [tagIds.public]
                             }
                         ]
                     }
@@ -786,11 +790,6 @@ class DenkxwebUtil {
                     .pipe(pick({ filter: 'objects' }))
                     .pipe(streamArray())
                     .on('data', ({ value }) => {
-                        const hasParentObjectType = value.item?.['_nested:item__objektkategorie']?.some((category) => {
-                            return category.lk_objektkategorie?.conceptURI === PARENT_OBJECT_TYPE_URI
-                        })
-                        if (!hasParentObjectType) return;
-
                         GROUP_MAP[value._system_object_id] = value;
                     })
                     .on('end', resolve)
