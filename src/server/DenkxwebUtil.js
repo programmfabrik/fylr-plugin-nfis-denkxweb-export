@@ -1096,7 +1096,9 @@ class DenkxwebUtil {
 
         for (let i = 0; i < imageObjects.length; i++) {
             const imageObject = imageObjects[i];
-            if (!imageObject.bild || imageObject.bild?.lk_veroeffentlichen?.ja_nein_objekttyp?._id !== 1) continue;
+            if (!imageObject.bild || imageObject.bild?.lk_veroeffentlichen?.ja_nein_objekttyp?._id !== 1 && imageObject.bild?.bild.length > 0) continue;
+
+            const lastBildIndex = imageObject.bild?.bild.length - 1
 
             const image = {
                 identifier: imageObject._system_object_id,
@@ -1108,13 +1110,13 @@ class DenkxwebUtil {
                 licence: "CC-BY-SA 4.0",
                 yearOfOrigin: null,
                 mimeType: null,
-                filename: imageObject.bild?.bild?.[0]?.original_filename || null
+                filename: imageObject.bild?.bild?.[lastBildIndex]?.original_filename || null
             }
 
             // this url is the only part of the image object that is not optional in the xml schem
             // so of course it's the only thing we can't currently get, because the api doesn't deliver the data for the original image
-            image.standard = imageObject.bild?.bild?.[0]?.versions?.original?.deep_link_url || null
-            image.mimeType = imageObject.bild?.bild?.[0]?.versions?.original?.technical_metadata?.mime_type || null
+            image.standard = imageObject.bild?.bild?.[lastBildIndex]?.versions?.original?.deep_link_url || null
+            image.mimeType = imageObject.bild?.bild?.[lastBildIndex]?.versions?.original?.technical_metadata?.mime_type || null
             image.yearOfOrigin = imageObject.bild?.entstehungsdatum?.value?.split('-')[0];
 
             if (image.standard) {
