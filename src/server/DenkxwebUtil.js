@@ -679,7 +679,7 @@ class DenkxwebUtil {
         themesJsonArray.forEach(themesJson => {
             for (let i = 0; i < themesJson.length; i++) {
                 const theme = themesJson[i];
-                const label = theme.hiddenLabel?.de?.[0]
+                const label = theme.hiddenLabel?.de?.[0] || theme.prefLabel?.de || theme.altLabel?.de?.[0]
                 const URI = theme.uri
                 if (label && URI) {
                     THEMES_MAP[URI] = label
