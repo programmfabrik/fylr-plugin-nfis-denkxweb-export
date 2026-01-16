@@ -28,7 +28,7 @@ const GROUP_MAP = {}
 const GROUP_MEMBER_MAP = {}
 // poylgon map: ouuid => poylgon object
 const POLYGON_MAP = {}
-// iamge map: system_object_id of the image object => image object
+// image map: system_object_id of the image object => image object
 const IMAGE_MAP = {}
 
 class DenkxwebUtil {
@@ -206,47 +206,7 @@ class DenkxwebUtil {
             })
         }
 
-
-        // if polygon exists, then point should also exist
-        if (mappedData.polygon && mappedData.point) {
-            const polygonCoordinates = mappedData.polygon?.geometry?.coordinates?.flat(2)
-            const pointCoordinates = mappedData.point?.geometry?.coordinates?.flat(2)
-            if (Array.isArray(polygonCoordinates) && Array.isArray(polygonCoordinates)) {
-                monument.geoReference = {
-                    position: {
-                        'gml:Point': {
-                            '@': {
-                                'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geopos.Geom_0`,
-                                srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
-                                srsDimension: '2'
-                            },
-                            'gml:pos': pointCoordinates.join(' '),
-                        }
-                    },
-                    surface: {
-                        'gml:MultiSurface': {
-                            '@': {
-                                'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geosurface.Geom_0`,
-                                srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
-                                srsDimension: '2'
-                            },
-                            'gml:surfaceMember': {
-                                'gml:Polygon': {
-                                    '@': {
-                                        'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geosurface.Geom_1`,
-                                    },
-                                    'gml:exterior': {
-                                        'gml:LinearRing': {
-                                            'gml:posList': polygonCoordinates.join(' '),
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        monument.geoReference = this.#getGeoReference(mappedData.polygons, mappedData.point, mappedData.recId)
 
         return monument;
     }
@@ -292,49 +252,61 @@ class DenkxwebUtil {
         if (mappedData.preferredImage) {
             monument.preferredImage = { '@xlink:href': mappedData.preferredImage };
         }
+
+        monument.geoReference = this.#getGeoReference(mappedData.polygons, mappedData.point, mappedData.recId)
         // if polygon exists, then point should also exist
-        if (mappedData.polygon && mappedData.point) {
-            const polygonCoordinates = mappedData.polygon?.geometry?.coordinates?.flat(2)
-            const pointCoordinates = mappedData.point?.geometry?.coordinates?.flat(2)
-            if (Array.isArray(polygonCoordinates) && Array.isArray(polygonCoordinates)) {
-                monument.geoReference = {
-                    position: {
-                        'gml:Point': {
-                            '@': {
-                                'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geopos.Geom_0`,
-                                srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
-                                srsDimension: '2'
-                            },
-                            'gml:pos': pointCoordinates.join(' '),
-                        }
-                    },
-                    surface: {
-                        'gml:MultiSurface': {
-                            '@': {
-                                'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geosurface.Geom_0`,
-                                srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
-                                srsDimension: '2'
-                            },
-                            'gml:surfaceMember': {
-                                'gml:Polygon': {
-                                    '@': {
-                                        'gml:id': `ii_v_m_dda_monument.fs_ix.${mappedData.recId}.geosurface.Geom_1`,
-                                    },
-                                    'gml:exterior': {
-                                        'gml:LinearRing': {
-                                            'gml:posList': polygonCoordinates.join(' '),
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+
 
         return monument;
 
+    }
+
+    static #getGeoReference(polygons, point, recId) {
+        if (!polygons || !Array.isArray(polygons.features) || !point) return null
+
+        const pointCoordinates = point?.geometry?.coordinates?.flat(2)
+        const surfaceMembers = [];
+        polygons.features.forEach((polygon, i) => {
+            const polygonCoordinates = polygon?.geometry?.coordinates?.flat(2)
+            surfaceMembers.push({
+                'gml:Polygon': {
+                    '@': {
+                        'gml:id': `ii_v_m_dda_monument.fs_ix.${recId}.geosurface.Geom_${i + 1}`,
+                    },
+                    'gml:exterior': {
+                        'gml:LinearRing': {
+                            'gml:posList': polygonCoordinates.join(' '),
+                        }
+                    }
+                }
+            })
+
+        })
+        if (surfaceMembers.length === 0 || !Array.isArray(pointCoordinates)) return null
+
+        const geoReference = {
+            position: {
+                'gml:Point': {
+                    '@': {
+                        'gml:id': `ii_v_m_dda_monument.fs_ix.${recId}.geopos.Geom_0`,
+                        srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
+                        srsDimension: '2'
+                    },
+                    'gml:pos': pointCoordinates.join(' '),
+                }
+            },
+            surface: {
+                'gml:MultiSurface': {
+                    '@': {
+                        'gml:id': `ii_v_m_dda_monument.fs_ix.${recId}.geosurface.Geom_0`,
+                        srsName: "http://www.opengis.net/def/crs/epsg/0/25832",
+                        srsDimension: '2'
+                    },
+                    'gml:surfaceMember': surfaceMembers
+                }
+            }
+        }
+        return geoReference
     }
 
     static async #mapDataItem(object, accessToken, tagIds) {
@@ -377,7 +349,7 @@ class DenkxwebUtil {
             authoritativeRepresentation: 'https://denkmalpflege.niedersachsen.de/startseite/',                          // Done
             datingFrom: null,                                                                                           // Done
             point: null,                                                                                                // Done
-            polygon: null,                                                                                              // Done
+            polygons: null,                                                                                             // Done
             groups: [],                                                                                                 // Done
             groupMembers: [],                                                                                           // Done
             ppnReference: [],                                                                                           // Done
@@ -509,10 +481,10 @@ class DenkxwebUtil {
         result.theme = this.#getThemes(object.item?.['_nested:item__thema'] || []);
         result.groupMembers = this.#getGroupMembers(object)
         result.images = this.#getImages(object, preferredImageId);
-        result.polygon = this.#getPolygon(object);
+        result.polygons = this.#getPolygons(object);
 
-        if (result.polygon) {
-            result.point = pointOnFeature(result.polygon);
+        if (result.polygons) {
+            result.point = pointOnFeature(result.polygons);
         }
 
         return result
@@ -542,7 +514,7 @@ class DenkxwebUtil {
 
             ddaObj: null, // needs a new field in NFIS?
             point: null,
-            polygon: null,
+            polygons: null,
             preferredImage: null,
         }
 
@@ -565,10 +537,10 @@ class DenkxwebUtil {
         if (preferredImageId) {
             result.preferredImage = `urn:x-adabweb:${preferredImageId}`
         }
-        result.polygon = this.#getPolygon(object);
+        result.polygons = this.#getPolygons(object);
 
-        if (result.polygon) {
-            result.point = pointOnFeature(result.polygon);
+        if (result.polygons) {
+            result.point = pointOnFeature(result.polygons);
         }
 
         return result
@@ -1016,34 +988,94 @@ class DenkxwebUtil {
         return persons
     }
 
-    static #getPolygon(object) {
+    static #getPolygons(object) {
         const objecttype = object._objecttype
         // TODO: Nachdem testen die statische ID rausnehmen
-        // const ouuid = Math.random() > 0.5 ? "321dfe21-293f-47d6-ac20-7ae058570e8c" : "10135592-550f-47bc-bdd3-38a99d8be43f"
-        const ouuid = object[objecttype]?.lk_nfis_geometrie?.geometry_ids?.[0] || null;
-        if (!ouuid) return null;
+        // const itemTestIds = ["321dfe21-293f-47d6-ac20-7ae058570e8c", "10135592-550f-47bc-bdd3-38a99d8be43f"]
+        // const flaecheTestIds = ["ec9983a0-759d-4a70-aac8-607357647e9a"]
+        // const geometryIds = objecttype === 'flaeche' ? flaecheTestIds : itemTestIds
+
+        const geometryIds = object[objecttype]?.lk_nfis_geometrie?.geometry_ids;
+
+        if (!geometryIds?.length) return null;
+
+        const polygons = { type: 'FeatureCollection', features: [] }
+        for (let i = 0; i < geometryIds.length; i++) {
+            const ouuid = geometryIds[i];
+            const polygon = POLYGON_MAP[ouuid]
+            if (polygon) {
+                polygons.features.push(polygon)
+            }
+        }
+
+        if (polygons.features.length === 0) return null;
 
 
-        return POLYGON_MAP[ouuid] || null
+        return polygons
     }
 
     static async #getBundledPolygons(objects, geoserverAuth) {
 
-        const ouuids = [];
+        const itemOuuids = [];
+        const flaecheOuuids = [];
         objects.forEach(object => {
             const objecttype = object._objecttype
+
             // TODO: Nachdem testen die statische ID rausnehmen
-            // const ouuid = Math.random() > 0.5 ? "321dfe21-293f-47d6-ac20-7ae058570e8c" : "10135592-550f-47bc-bdd3-38a99d8be43f"
-            const ouuid = object[objecttype]?.lk_nfis_geometrie?.geometry_ids?.[0] || null;
+            // const itemTestIds = ["321dfe21-293f-47d6-ac20-7ae058570e8c", "10135592-550f-47bc-bdd3-38a99d8be43f"]
+            // const flaecheTestIds = ["ec9983a0-759d-4a70-aac8-607357647e9a"]
+            // const geometryIds = objecttype === 'flaeche' ? flaecheTestIds : itemTestIds
 
-            if (!ouuid) return;
+            const geometryIds = object[objecttype]?.lk_nfis_geometrie?.geometry_ids;
 
-            ouuids.push(`'${ouuid}'`)
+            if (!Array.isArray(geometryIds) || geometryIds.length === 0) return;
+
+            for (let i = 0; i < geometryIds.length; i++) {
+                const ouuid = geometryIds[i];
+
+                if (objecttype === 'item') {
+                    itemOuuids.push(`'${ouuid}'`)
+                } else if (objecttype === 'flaeche') {
+                    flaecheOuuids.push(`'${ouuid}'`)
+                }
+            }
+
+
         });
 
-        if (ouuids.length === 0) return;
+        if (itemOuuids.length === 0 && flaecheOuuids.length === 0) return;
 
-        const url = `https://geodaten.nfis6.gbv.de/geoserver/viewer/wfs/?service=WFS&version=1.1.0&request=GetFeature&typename=objekt_fylr_preview&outputFormat=application/json&srsname=EPSG:25832`
+        const promises = [];
+        if (itemOuuids.length > 0) {
+            promises.push(this.#makeGeoserverRequest('objekt_fylr_preview', itemOuuids, geoserverAuth))
+        }
+
+        if (flaecheOuuids.length > 0) {
+            promises.push(this.#makeGeoserverRequest('flaeche_fylr_preview', flaecheOuuids, geoserverAuth))
+        }
+
+        const responses = await Promise.all(promises);
+        for (let i = 0; i < responses.length; i++) {
+            const response = responses[i];
+            if (!response.ok) {
+                return;
+            }
+
+            const featureCollection = await response.json()
+            if (!featureCollection.features || featureCollection.features.length === 0) {
+                return;
+            }
+            featureCollection.features.forEach(feature => {
+                if (!feature?.properties?.ouuid) return
+                if (!Array.isArray(feature?.geometry?.coordinates) || feature.geometry.coordinates.length === 0) return
+
+                POLYGON_MAP[feature.properties.ouuid] = feature
+            });
+        }
+    }
+
+    static #makeGeoserverRequest(typeName, ouuids, geoserverAuth) {
+        const url = `https://geodaten.nfis6.gbv.de/geoserver/viewer/wfs/?service=WFS&version=1.1.0&request=GetFeature&typename=${typeName}&outputFormat=application/json&srsname=EPSG:25832`
         const urlEncodedBody = new URLSearchParams()
         urlEncodedBody.append('cql_filter', `ouuid in (${ouuids.join(',')})`)
 
@@ -1056,21 +1088,7 @@ class DenkxwebUtil {
             },
             body: urlEncodedBody
         }
-        const response = await fetch(url, requestOptions)
-        if (!response.ok) {
-            return;
-        }
-
-        const featureCollection = await response.json()
-        if (!featureCollection.features || featureCollection.features.length === 0) {
-            return;
-        }
-        featureCollection.features.forEach(feature => {
-            if (!feature?.properties?.ouuid) return
-            if (!Array.isArray(feature?.geometry?.coordinates) || feature.geometry.coordinates.length === 0) return
-            POLYGON_MAP[feature.properties.ouuid] = feature
-        });
-
+        return fetch(url, requestOptions)
     }
 
 
