@@ -19,6 +19,7 @@ build: clean buildinfojson ## build plugin
 	mkdir -p build/$(PLUGIN_NAME)/server/extension
 
 	cp src/server/denkxweb-endpoint.js build/$(PLUGIN_NAME)/server/denkxweb-endpoint.js
+	cp src/server/denkxweb-public-endpoint.js build/$(PLUGIN_NAME)/server/denkxweb-public-endpoint.js
 	cp src/server/DenkxwebUtil.js build/$(PLUGIN_NAME)/server/DenkxwebUtil.js
 
 	cp l10n/nfis-denkxweb-export.csv build/$(PLUGIN_NAME)/l10n/nfis-denkxweb-export.csv # copy l10n
