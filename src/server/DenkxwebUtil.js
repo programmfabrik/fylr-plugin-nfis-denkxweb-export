@@ -266,20 +266,26 @@ class DenkxwebUtil {
 
         const pointCoordinates = point?.geometry?.coordinates?.flat(2)
         const surfaceMembers = [];
+        let surfaceCounter = 0;
         polygons.features.forEach((polygon, i) => {
-            const polygonCoordinates = polygon?.geometry?.coordinates?.flat(2)
-            surfaceMembers.push({
-                'gml:Polygon': {
-                    '@': {
-                        'gml:id': `ii_v_m_dda_monument.fs_ix.${recId}.geosurface.Geom_${i + 1}`,
-                    },
-                    'gml:exterior': {
-                        'gml:LinearRing': {
-                            'gml:posList': polygonCoordinates.join(' '),
-                        }
+            if (polygon.geometry.type === 'Polygon') {
+                // handles both normal polygon and polygon with hole
+                const surfaceMember = this.#getSurfaceMemberFromCoordinates(polygon.geometry.coordinates, recId, surfaceCounter);
+                if (surfaceMember) {
+                    surfaceMembers.push(surfaceMember)
+                    surfaceCounter++;
+                }
+
+            } else if (polygon.geometry.type === 'MultiPolygon') {
+                for (let i = 0; i < polygon.geometry.coordinates.length; i++) {
+                    const coordinates = polygon.geometry.coordinates[i];
+                    const surfaceMember = this.#getSurfaceMemberFromCoordinates(coordinates, recId, surfaceCounter);
+                    if (surfaceMember) {
+                        surfaceMembers.push(surfaceMember)
+                        surfaceCounter++;
                     }
                 }
-            })
+            }
 
         })
         if (surfaceMembers.length === 0 || !Array.isArray(pointCoordinates)) return null
@@ -307,6 +313,34 @@ class DenkxwebUtil {
             }
         }
         return geoReference
+    }
+
+    static #getSurfaceMemberFromCoordinates(coordinates, recId, surfaceCounter) {
+        if (!Array.isArray(coordinates) || coordinates.length === 0) return null;
+
+        const exteriorCoordinates = coordinates[0].flat();
+        const surfaceMember = {
+            'gml:Polygon': {
+                '@': {
+                    'gml:id': `ii_v_m_dda_monument.fs_ix.${recId}.geosurface.Geom_${surfaceCounter + 1}`,
+                },
+                'gml:exterior': {
+                    'gml:LinearRing': {
+                        'gml:posList': exteriorCoordinates.join(' '),
+                    }
+                },
+                'gml:interior': []
+            }
+        }
+        for (let i = 1; i < coordinates.length; i++) {
+            const interiorCoordinates = coordinates[i].flat();
+            surfaceMember['gml:Polygon']['gml:interior'].push({
+                'gml:LinearRing': {
+                    'gml:posList': interiorCoordinates.join(' '),
+                }
+            })
+        }
+        return surfaceMember
     }
 
     static async #mapDataItem(object, accessToken, tagIds) {
@@ -1000,6 +1034,7 @@ class DenkxwebUtil {
         if (!geometryIds?.length) return null;
 
         const polygons = { type: 'FeatureCollection', features: [] }
+
         for (let i = 0; i < geometryIds.length; i++) {
             const ouuid = geometryIds[i];
             const polygon = POLYGON_MAP[ouuid]
@@ -1009,7 +1044,7 @@ class DenkxwebUtil {
         }
 
         if (polygons.features.length === 0) return null;
-
+        // process.stdout.write(JSON.stringify(polygons, null, 2))
 
         return polygons
     }
@@ -1047,11 +1082,11 @@ class DenkxwebUtil {
 
         const promises = [];
         if (itemOuuids.length > 0) {
-            promises.push(this.#makeGeoserverRequest('objekt_fylr_preview', itemOuuids, geoserverAuth))
+            promises.push(this.#makeGeoserverRequest('objekt_export_denkmalatlas', itemOuuids, geoserverAuth))
         }
 
         if (flaecheOuuids.length > 0) {
-            promises.push(this.#makeGeoserverRequest('flaeche_fylr_preview', flaecheOuuids, geoserverAuth))
+            promises.push(this.#makeGeoserverRequest('flaeche_export_denkmalatlas', flaecheOuuids, geoserverAuth))
         }
 
         const responses = await Promise.all(promises);
