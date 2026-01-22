@@ -3,7 +3,7 @@ const { Readable } = require('stream');
 const { parser } = require('stream-json');
 const { pick } = require('stream-json/filters/Pick');
 const { ignore } = require('stream-json/filters/Ignore');
-const { streamObject } = require('stream-json/streamers/StreamObject');
+const { streamValues } = require('stream-json/streamers/StreamValues');
 const { streamArray } = require('stream-json/streamers/StreamArray');
 
 const DenkxwebUtil = require('./DenkxwebUtil');
@@ -271,7 +271,7 @@ async function main() {
         !pluginBaseConfigTagIds.public ||
         !pluginBaseConfigTagIds.not_public
     ) {
-        throwError("Tags-IDs not configured.", 'One or more tag ids are not set. An admin can set the tag ids in the base config for this plugin.')
+        throwError("Tag-IDs not configured.", 'One or more tag ids are not set. An admin can set the tag ids in the base config for this plugin.')
     }
 
     const poolIdStrings = pluginBaseConfigPoolIds?.pool_ids?.split(',')
@@ -341,31 +341,32 @@ async function main() {
     let offset = 0;
     let limit = 0;
 
-    const nodeStream = Readable.fromWeb(response.body);
-    const parsed = nodeStream.pipe(parser());
+    const [bodyMeta, bodyObjects] = response.body.tee();
 
+    // META: assemble the root object once (objects replaced/emptied)
     const metaDone = new Promise((resolve, reject) => {
-        parsed
-            .pipe(ignore({ filter: 'objects' }))
-            .pipe(streamObject())
-            .on('data', ({ key, value }) => {
-                if (key === 'count') total = value;
-                if (key === 'offset') offset = value;
-                if (key === 'limit') limit = value;
+        Readable.fromWeb(bodyMeta)
+            .pipe(parser())
+            .pipe(ignore({ filter: "objects" }))
+            .pipe(streamValues())
+            .once("data", ({ value }) => {
+                // value is the full root object (with objects removed/replaced)
+                ({ count: total, offset, limit } = value);
             })
-            .on('end', resolve)
-            .on('error', reject);
+            .on("end", resolve)
+            .on("error", reject);
     });
 
+    const parsedObjects = Readable.fromWeb(bodyObjects).pipe(parser());
     const objectsDone = new Promise((resolve, reject) => {
-        parsed
-            .pipe(pick({ filter: 'objects' }))
+        parsedObjects
+            .pipe(pick({ filter: "objects" }))
             .pipe(streamArray())
-            .on('data', ({ value }) => {
-                objects.push(value)
+            .on("data", ({ value }) => {
+                objects.push(value);
             })
-            .on('end', resolve)
-            .on('error', reject);
+            .on("end", resolve)
+            .on("error", reject);
     });
 
     await Promise.all([metaDone, objectsDone]);
