@@ -41,7 +41,7 @@ The endpoint accepts the following GET-Parameters:
 
 | name     | type    | required | default | description                                                                        |
 |----------|---------|----------|---------|------------------------------------------------------------------------------------|
-| uuid     | string  | true     |         | The UUid of the monument that you want to retrieve                                 |
+| uuid     | string  | true     |         | The UUID of the monument that you want to retrieve                                 |
 
 
 ## installation
