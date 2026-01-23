@@ -5,13 +5,14 @@ and self organize bug fixing. Feel free to directly contact the committing
 developers.
 
 # nfis-denkxweb-export
-Custom endpoint for fylr-API
+Custom endpoints for fylr-API
+The plugin provides several new  API endpoints. Each endpoint is explained below.
+- Every endpoint required authentication and the authenticated user must have the "use_denkxweb_endpoint" system right.
+- The user bearer token has to be passed in the "Authorization" header as usual.
 
-The plugin provides a new API endpoint under "GET /api/v1/plugin/extension/nfis-denkxweb-export/export".
+## /export endpoint
 
-You have to call this endpoint with a user that has been assigned the associated "use_denkxweb_endpoint" system right.
-
-The user bearer token has to be passed in the "Authorization" header as usual.
+> "GET /api/v1/plugin/extension/nfis-denkxweb-export/export".
 
 The endpoint accepts the following GET-Parameters:
 
@@ -20,6 +21,27 @@ The endpoint accepts the following GET-Parameters:
 | limit    | integer | false    | 1000    | Limits entries to the first X entries found.                                       |
 | offset   | integer | false    | 0       | Skip X entries                                                                     |
 | fromDate | String  | false    |         | Format: YYYY-MM-DD Limits entries to those that have been changed since that date. |
+
+## /public endpoint
+
+> "GET /api/v1/plugin/extension/nfis-denkxweb-export/public".
+
+The endpoint accepts the following GET-Parameters:
+
+| name     | type    | required | default | description                                                                        |
+|----------|---------|----------|---------|------------------------------------------------------------------------------------|
+| limit    | integer | false    | 1000    | Limits entries to the first X entries found.                                       |
+| offset   | integer | false    | 0       | Skip X entries                                                                     |
+
+## /uuid endpoint
+
+> "GET /api/v1/plugin/extension/nfis-denkxweb-export/uuid".
+
+The endpoint accepts the following GET-Parameters:
+
+| name     | type    | required | default | description                                                                        |
+|----------|---------|----------|---------|------------------------------------------------------------------------------------|
+| uuid     | string  | true     |         | The UUid of the monument that you want to retrieve                                 |
 
 
 ## installation
