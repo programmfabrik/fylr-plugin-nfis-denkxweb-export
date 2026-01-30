@@ -1023,8 +1023,8 @@ class DenkxwebUtil {
     }
 
     static #getPolygons(object) {
-        const objecttype = object._objecttype
         // TODO: Nachdem testen die statische ID rausnehmen
+        // const objecttype = object._objecttype
         // const itemTestIds = ["321dfe21-293f-47d6-ac20-7ae058570e8c", "10135592-550f-47bc-bdd3-38a99d8be43f"]
         // const flaecheTestIds = ["ec9983a0-759d-4a70-aac8-607357647e9a"]
         // const geometryIds = objecttype === 'flaeche' ? flaecheTestIds : itemTestIds
@@ -1038,7 +1038,7 @@ class DenkxwebUtil {
         for (let i = 0; i < geometryIds.length; i++) {
             const ouuid = geometryIds[i];
             const polygon = POLYGON_MAP[ouuid]
-            if (polygon) {
+            if (polygon && !this.arrayIsEmpty(polygon?.geometry?.coordinates)) {
                 polygons.features.push(polygon)
             }
         }
@@ -1283,6 +1283,10 @@ class DenkxwebUtil {
         }
 
         return object.item.lk_objekttyp.conceptName
+    }
+
+    static arrayIsEmpty(array) {
+        return Array.isArray(array) && array.every(DenkxwebUtil.arrayIsEmpty)
     }
 }
 
