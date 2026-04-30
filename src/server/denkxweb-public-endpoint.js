@@ -25,8 +25,8 @@ const searchUrl = "http://fylr.localhost:8081/api/v1/search?pretty=0"
 const baseSearchPayload = {
     "offset": offset,
     "limit": limit,
-    "format": "standard",
-    // "format": "long",
+    "format": "short",
+    // "format": "standard",
     "search": [
         {
             "__filter": "SearchTypeSelector",
@@ -279,7 +279,7 @@ async function main() {
         body: JSON.stringify(payload),
     })
 
-    let objects = [];
+    let uuids = [];
     let total = 0;
     let offset = 0;
     let limit = 0;
@@ -304,9 +304,9 @@ async function main() {
     const objectsDone = new Promise((resolve, reject) => {
         Readable.fromWeb(bodyObjects)
             .pipe(parser())
-            .pipe(pick({ filter: "objects" }))
-            .pipe(streamArray())
-            .on("data", ({ value }) => objects.push(value))
+            .pipe(pick({ filter: /objects\.\d+\._uuid/ }))
+            .pipe(streamValues())
+            .on("data", ({ value }) => uuids.push(value))
             .on("end", resolve)
             .on("error", reject);
     });
@@ -316,11 +316,11 @@ async function main() {
     // console.log({ total, offset, limit, objectsCount: objects.length });
 
     const responseData = {
-        count: objects?.length || 0,
+        count: uuids?.length || 0,
         total: total,
         offset: offset,
         limit: limit,
-        data: objects.map((object) => object._uuid),
+        data: uuids
     }
 
     process.stdout.write(JSON.stringify(responseData, null, 2))

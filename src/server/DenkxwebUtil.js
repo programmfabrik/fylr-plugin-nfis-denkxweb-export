@@ -112,7 +112,7 @@ class DenkxwebUtil {
             municipality: mappedData.municipality,
             boundary: mappedData.boundary,
             area: mappedData.area,
-            address: mappedData.address,
+            addresses: mappedData.addresses,
             name: mappedData.name,
             description: mappedData.description,
             reason: mappedData.reason,
@@ -362,7 +362,7 @@ class DenkxwebUtil {
             municipality: null,                                                                                         // Done
             boundary: null,                                                                                             // Done
             area: null,                                                                                                 // Done
-            address: null,                                                                                              // Done
+            addresses: { address: [] },                                                                                              // Done
             name: object.item['_nested:item__titel']?.[1]?.titel || null,                                               // Done
             description: null,                                                                                          // Done
             reason: null,                                                                                               // Done
@@ -443,9 +443,11 @@ class DenkxwebUtil {
             result.adabwebId = adabwebIdentifier.identifier
         }
 
-        const currentAddress = object.item?.['_nested:item__anschrift']?.find((address) => address.lk_adresstyp?.conceptURI === CURRENT_ADDRESS_URI)
-        if (currentAddress) {
-            result.address = `${currentAddress.strasse || ''} ${currentAddress.hausnummer || ''} ${currentAddress?.hausnummer_zusatz || ''}`.trim().replace('  ', ' ')
+        const currentAddresses = object.item?.['_nested:item__anschrift']?.filter((address) => address.lk_adresstyp?.conceptURI === CURRENT_ADDRESS_URI)
+        if (currentAddresses.length) {
+            currentAddresses.forEach(currentAddress => {
+                result.addresses.address.push(`${currentAddress.strasse || ''} ${currentAddress.hausnummer || ''} ${currentAddress?.hausnummer_zusatz || ''}`.trim().replace('  ', ' '))
+            })
         }
 
         // object is Level 0 => we are not allowed to send this data
